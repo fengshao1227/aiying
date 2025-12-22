@@ -166,7 +166,12 @@ class OrderController extends Controller
                     }
                 }
 
-                $goodsAmount += $item->price * $item->quantity;
+                // 使用商品当前价格，而不是购物车保存的价格
+                $itemPrice = $item->specification_id
+                    ? $item->specification->price
+                    : $item->product->price;
+
+                $goodsAmount += $itemPrice * $item->quantity;
             }
 
             // 计算积分抵扣
@@ -238,6 +243,11 @@ class OrderController extends Controller
 
             // 创建订单明细
             foreach ($cartItems as $item) {
+                // 使用商品当前价格
+                $itemPrice = $item->specification_id
+                    ? $item->specification->price
+                    : $item->product->price;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
@@ -245,9 +255,9 @@ class OrderController extends Controller
                     'product_name' => $item->product->name,
                     'product_image' => $item->product->cover_image,
                     'sku_name' => $item->specification ? json_encode($item->specification->spec_values) : null,
-                    'price' => $item->price,
+                    'price' => $itemPrice,
                     'quantity' => $item->quantity,
-                    'subtotal' => $item->price * $item->quantity,
+                    'subtotal' => $itemPrice * $item->quantity,
                 ]);
 
                 // 扣减库存
