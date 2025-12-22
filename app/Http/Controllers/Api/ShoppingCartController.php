@@ -41,11 +41,16 @@ class ShoppingCartController extends Controller
 
         // 转换为前端期望的格式
         $list = $cartItems->map(function ($item) {
+            // 使用商品实时价格，不使用购物车缓存价格
+            $price = $item->specification_id
+                ? ($item->specification->price ?? 0)
+                : ($item->product->price ?? 0);
+
             return [
                 'cart_id' => $item->id,
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->name ?? '',
-                'price' => $item->price ?? $item->product->price ?? 0,
+                'price' => $price,
                 'image_url' => $item->product->cover_image ?? '',
                 'quantity' => $item->quantity,
                 'specification_id' => $item->specification_id,
@@ -139,7 +144,7 @@ class ShoppingCartController extends Controller
             ->first();
 
         if ($existingCart) {
-            // 更新数量
+            // 更新数量（不再保存价格，使用商品实时价格）
             $existingCart->update([
                 'quantity' => $existingCart->quantity + $request->quantity,
             ]);
@@ -151,13 +156,13 @@ class ShoppingCartController extends Controller
             ]);
         }
 
-        // 创建购物车记录
+        // 创建购物车记录（不保存价格，使用商品实时价格）
         $cartItem = ShoppingCart::create([
             'user_id' => $user->id,
             'product_id' => $request->product_id,
             'specification_id' => $request->specification_id,
             'quantity' => $request->quantity,
-            'price' => $price,
+            // 移除 'price' => $price, 使用商品实时价格
         ]);
 
         return response()->json([
