@@ -124,4 +124,51 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::put('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'update']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'destroy']);
     });
+
+    // 文件上传
+    Route::prefix('upload')->group(function () {
+        Route::post('/image', [\App\Http\Controllers\Admin\UploadController::class, 'uploadImage']);
+        Route::delete('/image', [\App\Http\Controllers\Admin\UploadController::class, 'deleteImage']);
+    });
+
+    // 用户管理
+    Route::prefix('users')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update']);
+        Route::put('/{id}/points', [\App\Http\Controllers\Admin\UserController::class, 'updatePoints']);
+        Route::get('/{id}/orders', [\App\Http\Controllers\Admin\UserController::class, 'orders']);
+    });
+
+    // 商品管理
+    Route::prefix('products')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ProductAdminController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\ProductAdminController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\ProductAdminController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\ProductAdminController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\ProductAdminController::class, 'destroy']);
+    });
+
+    // 商品分类管理
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CategoryController::class, 'index']);
+    });
+
+    // 订单管理
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\OrderAdminController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'show']);
+        Route::put('/{id}/status', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateStatus']);
+        Route::put('/{id}/delivery', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateDelivery']);
+    });
+
+    // 套餐管理
+    Route::prefix('packages')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PackageController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\PackageController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\PackageController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\PackageController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PackageController::class, 'destroy']);
+        Route::put('/{id}/status', [\App\Http\Controllers\Admin\PackageController::class, 'updateStatus']);
+    });
 });
