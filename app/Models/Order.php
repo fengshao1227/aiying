@@ -14,6 +14,7 @@ class Order extends Model
         'order_no',
         'user_id',
         'order_type',
+        'room_number',
         'receiver_name',
         'receiver_phone',
         'receiver_province',

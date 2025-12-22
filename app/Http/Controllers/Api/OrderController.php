@@ -108,17 +108,24 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // 获取收货地址
-            $address = ShippingAddress::where('user_id', $user->id)
-                ->where('id', $request->address_id)
-                ->first();
+            // 订单类型
+            $orderType = $request->order_type;
 
-            if (!$address) {
-                return response()->json([
-                    'code' => 400,
-                    'message' => '收货地址不存在',
-                    'data' => null,
-                ], 400);
+            // 获取收货地址（仅商品订单需要）
+            $address = null;
+            if ($orderType === 'goods') {
+                $address = ShippingAddress::where('user_id', $user->id)
+                    ->where('id', $request->address_id)
+                    ->first();
+
+                if (!$address) {
+                    DB::rollBack();
+                    return response()->json([
+                        'code' => 400,
+                        'message' => '收货地址不存在',
+                        'data' => null,
+                    ], 400);
+                }
             }
 
             // 验证购物车商品
@@ -193,16 +200,10 @@ class OrderController extends Controller
             $totalAmount = $goodsAmount + $shippingFee - $pointsDiscount;
 
             // 创建订单
-            $order = Order::create([
+            $orderData = [
                 'order_no' => $this->generateOrderNo(),
                 'user_id' => $user->id,
-                'order_type' => 'goods',
-                'receiver_name' => $address->receiver_name,
-                'receiver_phone' => $address->receiver_phone,
-                'receiver_province' => $address->province,
-                'receiver_city' => $address->city,
-                'receiver_district' => $address->district,
-                'receiver_detail' => $address->detail_address,
+                'order_type' => $orderType,
                 'goods_amount' => $goodsAmount,
                 'shipping_fee' => $shippingFee,
                 'points_used' => $pointsUsed,
@@ -211,7 +212,29 @@ class OrderController extends Controller
                 'order_status' => 0,
                 'payment_status' => 0,
                 'remark' => $request->remark,
-            ]);
+            ];
+
+            // 根据订单类型填充不同字段
+            if ($orderType === 'goods') {
+                // 商品订单：填充收货地址
+                $orderData['receiver_name'] = $address->receiver_name;
+                $orderData['receiver_phone'] = $address->receiver_phone;
+                $orderData['receiver_province'] = $address->province;
+                $orderData['receiver_city'] = $address->city;
+                $orderData['receiver_district'] = $address->district;
+                $orderData['receiver_detail'] = $address->detail_address;
+            } else {
+                // 家庭套餐：填充房间号
+                $orderData['room_number'] = $request->room_number;
+                $orderData['receiver_name'] = '';
+                $orderData['receiver_phone'] = '';
+                $orderData['receiver_province'] = '';
+                $orderData['receiver_city'] = '';
+                $orderData['receiver_district'] = '';
+                $orderData['receiver_detail'] = '';
+            }
+
+            $order = Order::create($orderData);
 
             // 创建订单明细
             foreach ($cartItems as $item) {
