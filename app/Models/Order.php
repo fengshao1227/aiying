@@ -27,6 +27,9 @@ class Order extends Model
         'total_amount',
         'order_status',
         'payment_status',
+        'payment_method',
+        'payment_time',
+        'transaction_id',
         'remark',
         'paid_at',
         'shipped_at',
@@ -45,6 +48,7 @@ class Order extends Model
             'total_amount' => 'decimal:2',
             'order_status' => 'integer',
             'payment_status' => 'integer',
+            'payment_time' => 'datetime',
             'paid_at' => 'datetime',
             'shipped_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -65,5 +69,44 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * 检查订单是否可以支付
+     */
+    public function canPay(): bool
+    {
+        // 订单状态为待支付(0) 且 支付状态为未支付(0)
+        return $this->order_status === 0 && $this->payment_status === 0;
+    }
+
+    /**
+     * 标记订单为已支付
+     */
+    public function markAsPaid(string $transactionId, array $paymentData): void
+    {
+        $this->update([
+            'payment_status' => 1,
+            'order_status' => 1, // 更新为待发货
+            'payment_method' => 'wechat',
+            'transaction_id' => $transactionId,
+            'payment_time' => $paymentData['success_time'] ?? now(),
+            'paid_at' => now(),
+        ]);
+    }
+
+    /**
+     * 获取支付描述
+     */
+    public function getPaymentDescription(): string
+    {
+        if ($this->order_type === 'goods') {
+            // 商品订单
+            $itemCount = $this->items->sum('quantity');
+            return sprintf('商品订单-%d件商品', $itemCount);
+        } else {
+            // 套餐订单
+            return '家属套餐订单';
+        }
     }
 }

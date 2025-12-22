@@ -54,6 +54,7 @@ Route::prefix('orders')->group(function () {
     Route::get('/', [OrderController::class, 'index']);
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::post('/', [OrderController::class, 'store']);
+    Route::post('/{id}/pay', [\App\Http\Controllers\Api\PaymentController::class, 'pay']);
     Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/{id}/confirm', [OrderController::class, 'confirm']);
 });
@@ -69,6 +70,9 @@ Route::prefix('points')->group(function () {
     Route::get('/', [PointsController::class, 'index']);
     Route::get('/balance', [PointsController::class, 'balance']);
 });
+
+// 支付回调路由（无需认证）
+Route::post('/payments/wechat/notify', [\App\Http\Controllers\Api\PaymentController::class, 'wechatNotify']);
 
 // ============================================================
 // 后台管理API路由
