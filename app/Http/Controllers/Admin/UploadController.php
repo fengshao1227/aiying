@@ -28,15 +28,27 @@ class UploadController extends Controller
             // 构建完整路径
             $directory = 'uploads';
             $relativePath = $directory . '/' . $filename;
-
-            // 确保目录存在
             $fullPath = storage_path('app/public/' . $directory);
+
+            // 确保目录存在且可写
             if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                mkdir($fullPath, 0775, true);
+            }
+
+            // 设置目录权限
+            chmod($fullPath, 0775);
+
+            // 检查目录是否可写
+            if (!is_writable($fullPath)) {
+                throw new \Exception("目录不可写: {$fullPath}");
             }
 
             // 移动文件
-            $file->move(storage_path('app/public/' . $directory), $filename);
+            $moved = $file->move($fullPath, $filename);
+
+            if (!$moved) {
+                throw new \Exception("文件移动失败");
+            }
 
             // 返回完整的可访问 URL
             $url = url('storage/' . $relativePath);
@@ -52,6 +64,11 @@ class UploadController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            \Log::error('图片上传失败', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'code' => 500,
                 'message' => '上传失败：' . $e->getMessage(),
