@@ -21,54 +21,26 @@ class UploadController extends Controller
         try {
             $file = $request->file('file');
 
-            // 生成唯一文件名
-            $extension = $file->getClientOriginalExtension();
-            $filename = date('Ymd') . '_' . Str::random(32) . '.' . $extension;
+            // 生成文件名
+            $filename = date('Ymd') . '_' . Str::random(16) . '.' . $file->getClientOriginalExtension();
 
-            // 构建完整路径
-            $directory = 'uploads';
-            $relativePath = $directory . '/' . $filename;
-            $fullPath = storage_path('app/public/' . $directory);
+            // 使用Storage直接存储到public磁盘
+            $path = Storage::disk('public')->putFileAs('uploads', $file, $filename);
 
-            // 确保目录存在且可写
-            if (!file_exists($fullPath)) {
-                mkdir($fullPath, 0775, true);
-            }
-
-            // 设置目录权限
-            chmod($fullPath, 0775);
-
-            // 检查目录是否可写
-            if (!is_writable($fullPath)) {
-                throw new \Exception("目录不可写: {$fullPath}");
-            }
-
-            // 移动文件
-            $moved = $file->move($fullPath, $filename);
-
-            if (!$moved) {
-                throw new \Exception("文件移动失败");
-            }
-
-            // 返回完整的可访问 URL
-            $url = url('storage/' . $relativePath);
+            // 生成访问URL
+            $url = url('storage/' . $path);
 
             return response()->json([
                 'code' => 200,
                 'message' => '上传成功',
                 'data' => [
                     'url' => $url,
-                    'path' => $relativePath,
+                    'path' => $path,
                     'filename' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('图片上传失败', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'code' => 500,
                 'message' => '上传失败：' . $e->getMessage(),
