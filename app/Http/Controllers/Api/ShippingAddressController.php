@@ -87,11 +87,11 @@ class ShippingAddressController extends Controller
 
         $address = ShippingAddress::create([
             'user_id' => $user->id,
-            'receiver_name' => $request->receiver_name,
+            'receiver_name' => $request->receiver_name ?? '',
             'receiver_phone' => $request->receiver_phone,
-            'province' => $request->province,
-            'city' => $request->city,
-            'district' => $request->district,
+            'province' => $request->province ?? '',
+            'city' => $request->city ?? '',
+            'district' => $request->district ?? '',
             'detail_address' => $request->detail_address,
             'is_default' => $request->is_default ?? 0,
         ]);
@@ -137,15 +137,15 @@ class ShippingAddressController extends Controller
                 ->update(['is_default' => 0]);
         }
 
-        $address->update($request->only([
-            'receiver_name',
-            'receiver_phone',
-            'province',
-            'city',
-            'district',
-            'detail_address',
-            'is_default',
-        ]));
+        $address->update([
+            'receiver_name' => $request->receiver_name ?? '',
+            'receiver_phone' => $request->receiver_phone,
+            'province' => $request->province ?? '',
+            'city' => $request->city ?? '',
+            'district' => $request->district ?? '',
+            'detail_address' => $request->detail_address,
+            'is_default' => $request->is_default ?? 0,
+        ]);
 
         return response()->json([
             'code' => 200,
