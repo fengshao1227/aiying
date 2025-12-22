@@ -39,17 +39,32 @@ class ShoppingCartController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // 转换为前端期望的格式
+        $list = $cartItems->map(function ($item) {
+            return [
+                'cart_id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product->name ?? '',
+                'price' => $item->price ?? $item->product->price ?? 0,
+                'image_url' => $item->product->cover_image ?? '',
+                'quantity' => $item->quantity,
+                'specification_id' => $item->specification_id,
+                'specification_name' => $item->specification ? json_encode($item->specification->spec_values) : null,
+            ];
+        });
+
         // 计算总价
-        $totalAmount = $cartItems->sum(function ($item) {
-            return $item->price * $item->quantity;
+        $totalAmount = $list->sum(function ($item) {
+            return $item['price'] * $item['quantity'];
         });
 
         return response()->json([
             'code' => 200,
             'message' => '获取成功',
             'data' => [
-                'items' => $cartItems,
+                'list' => $list,
                 'total_amount' => $totalAmount,
+                'total_items' => $list->count(),
             ],
         ]);
     }

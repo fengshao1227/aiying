@@ -22,12 +22,12 @@ class ShippingAddressRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'receiver_name' => 'required|string|max:50',
             'receiver_phone' => 'required|string|regex:/^1[3-9]\d{9}$/',
-            'province' => 'required|string|max:50',
-            'city' => 'required|string|max:50',
-            'district' => 'required|string|max:50',
             'detail_address' => 'required|string|max:200',
+            'receiver_name' => 'nullable|string|max:50',
+            'province' => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:50',
+            'district' => 'nullable|string|max:50',
             'is_default' => 'nullable|boolean',
         ];
     }
@@ -35,12 +35,8 @@ class ShippingAddressRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'receiver_name.required' => '收货人姓名不能为空',
             'receiver_phone.required' => '收货人电话不能为空',
             'receiver_phone.regex' => '手机号格式不正确',
-            'province.required' => '省份不能为空',
-            'city.required' => '城市不能为空',
-            'district.required' => '区县不能为空',
             'detail_address.required' => '详细地址不能为空',
         ];
     }
