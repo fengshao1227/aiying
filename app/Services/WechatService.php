@@ -79,4 +79,48 @@ class WechatService
             return null;
         }
     }
+
+    /**
+     * 通过code获取手机号（新版接口）
+     */
+    public function getPhoneNumber(string $code): ?string
+    {
+        try {
+            // 获取access_token
+            $tokenResponse = Http::get('https://api.weixin.qq.com/cgi-bin/token', [
+                'grant_type' => 'client_credential',
+                'appid' => $this->appId,
+                'secret' => $this->appSecret,
+            ]);
+
+            $tokenData = $tokenResponse->json();
+
+            if (isset($tokenData['errcode']) && $tokenData['errcode'] !== 0) {
+                Log::error('获取access_token失败', $tokenData);
+                throw new \Exception($tokenData['errmsg'] ?? '获取access_token失败');
+            }
+
+            $accessToken = $tokenData['access_token'];
+
+            // 获取手机号
+            $phoneResponse = Http::post("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={$accessToken}", [
+                'code' => $code,
+            ]);
+
+            $phoneData = $phoneResponse->json();
+
+            if (isset($phoneData['errcode']) && $phoneData['errcode'] !== 0) {
+                Log::error('获取手机号失败', $phoneData);
+                throw new \Exception($phoneData['errmsg'] ?? '获取手机号失败');
+            }
+
+            return $phoneData['phone_info']['phoneNumber'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('获取手机号异常', [
+                'message' => $e->getMessage(),
+                'code' => $code,
+            ]);
+            throw $e;
+        }
+    }
 }

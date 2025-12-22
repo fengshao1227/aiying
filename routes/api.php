@@ -15,6 +15,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/wechat-login', [AuthController::class, 'wechatLogin']);
     Route::get('/user-info', [AuthController::class, 'getUserInfo']);
     Route::put('/user', [AuthController::class, 'updateUser']);
+    Route::post('/bind-phone', [AuthController::class, 'bindPhone']);
 });
 
 // 商品分类路由

@@ -117,4 +117,59 @@ class AuthController extends Controller
             'data' => $user,
         ]);
     }
+
+    /**
+     * 绑定手机号
+     */
+    public function bindPhone(Request $request): JsonResponse
+    {
+        $user = User::where('openid', $request->header('X-Openid'))->first();
+
+        if (!$user) {
+            return response()->json([
+                'code' => 401,
+                'message' => '未登录',
+                'data' => null,
+            ], 401);
+        }
+
+        if (!$request->code) {
+            return response()->json([
+                'code' => 400,
+                'message' => '缺少code参数',
+                'data' => null,
+            ], 400);
+        }
+
+        try {
+            // 调用微信接口获取手机号
+            $phone = $this->wechatService->getPhoneNumber($request->code);
+
+            if (!$phone) {
+                return response()->json([
+                    'code' => 500,
+                    'message' => '获取手机号失败',
+                    'data' => null,
+                ], 500);
+            }
+
+            // 更新用户手机号
+            $user->update(['phone' => $phone]);
+
+            return response()->json([
+                'code' => 200,
+                'message' => '绑定成功',
+                'data' => [
+                    'phone' => $phone,
+                    'user' => $user,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => '绑定失败: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
 }
