@@ -34,7 +34,7 @@ git push origin "$BRANCH"
 # 3. 服务器更新
 echo -e "${CYAN}▶ 服务器更新...${NC}"
 sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" \
-    "cd $SERVER_PATH && git pull && php artisan config:cache && php artisan route:cache && chown -R www:www $SERVER_PATH"
+    "cd $SERVER_PATH && git pull && chown -R www:www $SERVER_PATH"
 
 if [ $? -eq 0 ]; then
     echo -e "\n${GREEN}✓ 快速部署完成！${NC}\n"

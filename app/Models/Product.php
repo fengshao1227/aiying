@@ -65,4 +65,11 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function packages()
+    {
+        return $this->belongsToMany(FamilyMealPackage::class, 'family_meal_package_product')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
 }

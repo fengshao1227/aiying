@@ -31,4 +31,14 @@ class FamilyMealPackage extends Model
             'status' => 'integer',
         ];
     }
+
+    /**
+     * 套餐包含的商品
+     */
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'family_meal_package_product')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
 }
