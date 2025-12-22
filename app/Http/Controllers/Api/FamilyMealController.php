@@ -27,6 +27,22 @@ class FamilyMealController extends Controller
 
         $packages = $query->paginate($request->input('per_page', 15));
 
+        // 转换数据格式，使用product_id作为id返回给前端
+        $transformedData = $packages->getCollection()->map(function ($package) {
+            return [
+                'id' => $package->product_id ?? $package->id, // 使用product_id，如果没有则用套餐id
+                'package_id' => $package->id, // 保留原始套餐id供参考
+                'name' => $package->name,
+                'price' => $package->price,
+                'cover_image' => $package->cover_image,
+                'description' => $package->description,
+                'services' => $package->services,
+                'duration_days' => $package->duration_days,
+            ];
+        });
+
+        $packages->setCollection($transformedData);
+
         return response()->json([
             'code' => 200,
             'message' => '获取成功',
@@ -57,10 +73,22 @@ class FamilyMealController extends Controller
             ], 400);
         }
 
+        // 返回格式与列表保持一致
+        $data = [
+            'id' => $package->product_id ?? $package->id,
+            'package_id' => $package->id,
+            'name' => $package->name,
+            'price' => $package->price,
+            'cover_image' => $package->cover_image,
+            'description' => $package->description,
+            'services' => $package->services,
+            'duration_days' => $package->duration_days,
+        ];
+
         return response()->json([
             'code' => 200,
             'message' => '获取成功',
-            'data' => $package,
+            'data' => $data,
         ]);
     }
 }
