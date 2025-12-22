@@ -241,13 +241,13 @@ class OrderController extends Controller
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'specification_id' => $item->specification_id,
+                    'sku_id' => $item->specification_id,
                     'product_name' => $item->product->name,
                     'product_image' => $item->product->cover_image,
-                    'spec_name' => $item->specification ? json_encode($item->specification->spec_values) : null,
+                    'sku_name' => $item->specification ? json_encode($item->specification->spec_values) : null,
                     'price' => $item->price,
                     'quantity' => $item->quantity,
-                    'total_amount' => $item->price * $item->quantity,
+                    'subtotal' => $item->price * $item->quantity,
                 ]);
 
                 // 扣减库存
