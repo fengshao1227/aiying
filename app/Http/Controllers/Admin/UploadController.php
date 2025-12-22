@@ -19,35 +19,44 @@ class UploadController extends Controller
         ]);
 
         try {
+            if (!$request->hasFile('file')) {
+                throw new \Exception('未检测到上传文件');
+            }
+
             $file = $request->file('file');
+
+            if (!$file->isValid()) {
+                throw new \Exception('上传文件无效');
+            }
 
             // 生成文件名
             $filename = date('Ymd') . '_' . Str::random(16) . '.' . $file->getClientOriginalExtension();
 
-            // 使用Storage存储，强制抛出异常
-            $disk = Storage::build([
-                'driver' => 'local',
-                'root' => storage_path('app/public'),
-                'throw' => true,
-            ]);
+            // 目标路径
+            $uploadPath = storage_path('app/public/uploads');
 
-            $path = $disk->putFileAs('uploads', $file, $filename);
-
-            if (!$path) {
-                throw new \Exception('文件存储失败');
+            // 确保目录存在
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0775, true);
             }
 
+            // 移动上传文件
+            $file->move($uploadPath, $filename);
+
+            // 相对路径
+            $relativePath = 'uploads/' . $filename;
+
             // 生成访问URL
-            $url = url('storage/' . $path);
+            $url = url('storage/' . $relativePath);
 
             return response()->json([
                 'code' => 200,
                 'message' => '上传成功',
                 'data' => [
                     'url' => $url,
-                    'path' => $path,
+                    'path' => $relativePath,
                     'filename' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
+                    'size' => filesize($uploadPath . '/' . $filename),
                 ],
             ]);
         } catch (\Exception $e) {
