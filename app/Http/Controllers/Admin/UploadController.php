@@ -15,20 +15,20 @@ class UploadController extends Controller
     public function uploadImage(Request $request)
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         try {
             $file = $request->file('file');
 
             // 生成唯一文件名
-            $filename = date('Y/m/d/') . Str::random(40) . '.' . $file->getClientOriginalExtension();
+            $filename = date('Ymd') . '/' . Str::random(32) . '.' . $file->getClientOriginalExtension();
 
             // 存储文件到 public/uploads 目录
             $path = $file->storeAs('uploads/' . $filename, null, 'public');
 
-            // 返回可访问的 URL
-            $url = Storage::disk('public')->url($path);
+            // 返回完整的可访问 URL
+            $url = url('storage/' . $path);
 
             return response()->json([
                 'code' => 200,
@@ -37,6 +37,7 @@ class UploadController extends Controller
                     'url' => $url,
                     'path' => $path,
                     'filename' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
                 ],
             ]);
         } catch (\Exception $e) {
