@@ -25,18 +25,28 @@ class UploadController extends Controller
             $extension = $file->getClientOriginalExtension();
             $filename = date('Ymd') . '_' . Str::random(32) . '.' . $extension;
 
-            // 存储文件到 public/uploads 目录
-            $path = $file->storeAs('uploads', $filename, 'public');
+            // 构建完整路径
+            $directory = 'uploads';
+            $relativePath = $directory . '/' . $filename;
+
+            // 确保目录存在
+            $fullPath = storage_path('app/public/' . $directory);
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
+
+            // 移动文件
+            $file->move(storage_path('app/public/' . $directory), $filename);
 
             // 返回完整的可访问 URL
-            $url = url('storage/' . $path);
+            $url = url('storage/' . $relativePath);
 
             return response()->json([
                 'code' => 200,
                 'message' => '上传成功',
                 'data' => [
                     'url' => $url,
-                    'path' => $path,
+                    'path' => $relativePath,
                     'filename' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
                 ],
