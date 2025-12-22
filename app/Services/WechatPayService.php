@@ -131,43 +131,39 @@ class WechatPayService
         $nonce = $resource['nonce'];
         $apiV3Key = $this->config['api_v3_key'];
 
-        // AEAD_AES_256_GCM解密
+        \Log::info('开始解密支付回调', [
+            'ciphertext_length' => strlen($ciphertext),
+            'nonce' => $nonce,
+            'associated_data' => $associatedData,
+            'api_v3_key_length' => strlen($apiV3Key),
+        ]);
+
+        // AEAD_AES_256_GCM解密方式1：tag在密文末尾
+        $tag = substr($ciphertext, -16);
+        $actualCiphertext = substr($ciphertext, 0, -16);
+
         $decrypted = openssl_decrypt(
-            $ciphertext,
+            $actualCiphertext,
             'aes-256-gcm',
             $apiV3Key,
             OPENSSL_RAW_DATA,
             $nonce,
-            substr($ciphertext, -16), // 提取tag
+            $tag,
             $associatedData
         );
 
         if ($decrypted === false) {
+            \Log::error('解密失败', ['openssl_error' => openssl_error_string()]);
             throw new \Exception('回调数据解密失败');
         }
 
-        $result = json_decode($decrypted, true); // 修复：应该解密后的数据，而不是原始密文
+        \Log::info('解密成功', ['decrypted_length' => strlen($decrypted)]);
+
+        $result = json_decode($decrypted, true);
 
         if (!$result) {
-            // 如果上面的解密失败，尝试另一种方式
-            $tag = substr($ciphertext, -16);
-            $ciphertext = substr($ciphertext, 0, -16);
-
-            $decrypted = openssl_decrypt(
-                $ciphertext,
-                'aes-256-gcm',
-                $apiV3Key,
-                OPENSSL_RAW_DATA,
-                $nonce,
-                $tag,
-                $associatedData
-            );
-
-            if ($decrypted === false) {
-                throw new \Exception('回调数据解密失败');
-            }
-
-            $result = json_decode($decrypted, true);
+            \Log::error('JSON解析失败', ['decrypted' => $decrypted]);
+            throw new \Exception('JSON解析失败');
         }
 
         return $result;
