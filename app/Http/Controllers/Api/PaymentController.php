@@ -33,9 +33,15 @@ class PaymentController extends Controller
      */
     public function pay(Request $request, $id): JsonResponse
     {
+        Log::info('开始处理支付请求', [
+            'order_id' => $id,
+            'openid_header' => $request->header('X-Openid'),
+        ]);
+
         $user = User::where('openid', $request->header('X-Openid'))->first();
 
         if (!$user) {
+            Log::warning('用户未登录', ['openid' => $request->header('X-Openid')]);
             return response()->json([
                 'code' => 401,
                 'message' => '未登录',
@@ -43,12 +49,15 @@ class PaymentController extends Controller
             ], 401);
         }
 
+        Log::info('用户验证通过', ['user_id' => $user->id]);
+
         // 查询订单
         $order = Order::where('user_id', $user->id)
             ->where('id', $id)
             ->first();
 
         if (!$order) {
+            Log::warning('订单不存在', ['order_id' => $id, 'user_id' => $user->id]);
             return response()->json([
                 'code' => 404,
                 'message' => '订单不存在',
@@ -56,8 +65,20 @@ class PaymentController extends Controller
             ], 404);
         }
 
+        Log::info('订单查询成功', [
+            'order_id' => $order->id,
+            'order_no' => $order->order_no,
+            'order_status' => $order->order_status,
+            'payment_status' => $order->payment_status,
+        ]);
+
         // 检查订单状态
         if (!$order->canPay()) {
+            Log::warning('订单状态不允许支付', [
+                'order_id' => $order->id,
+                'order_status' => $order->order_status,
+                'payment_status' => $order->payment_status,
+            ]);
             return response()->json([
                 'code' => 400,
                 'message' => '订单状态不允许支付',
@@ -66,8 +87,16 @@ class PaymentController extends Controller
         }
 
         try {
+            Log::info('开始调用微信支付API', [
+                'order_id' => $order->id,
+                'order_no' => $order->order_no,
+                'openid' => $user->openid,
+            ]);
+
             // 调用微信支付统一下单
             $paymentParams = $this->wechatPayService->createJsapiOrder($order, $user->openid);
+
+            Log::info('支付参数生成成功', ['prepay_id' => $paymentParams['package'] ?? 'unknown']);
 
             return response()->json([
                 'code' => 200,
@@ -79,6 +108,7 @@ class PaymentController extends Controller
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
