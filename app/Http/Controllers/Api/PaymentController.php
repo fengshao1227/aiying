@@ -214,12 +214,13 @@ class PaymentController extends Controller
             // 创建支付记录
             Payment::create([
                 'order_id' => $order->id,
+                'user_id' => $order->user_id,
                 'payment_no' => $transactionId,
                 'payment_method' => 'wechat',
                 'amount' => $paidAmount,
                 'status' => 1,
                 'paid_at' => $successTime ? date('Y-m-d H:i:s', strtotime($successTime)) : now(),
-                'callback_data' => json_encode($data),
+                'payment_data' => json_encode($data),
             ]);
 
             DB::commit();
