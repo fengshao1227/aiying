@@ -37,6 +37,6 @@ class ProductSpecification extends Model
 
     public function cartItems()
     {
-        return $this->hasMany(ShoppingCart::class, 'sku_id');
+        return $this->hasMany(ShoppingCart::class, 'specification_id');
     }
 }
