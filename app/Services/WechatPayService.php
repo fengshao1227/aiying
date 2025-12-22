@@ -146,7 +146,7 @@ class WechatPayService
             throw new \Exception('回调数据解密失败');
         }
 
-        $result = json_decode(substr($ciphertext, 0, -16), true);
+        $result = json_decode($decrypted, true); // 修复：应该解密后的数据，而不是原始密文
 
         if (!$result) {
             // 如果上面的解密失败，尝试另一种方式
