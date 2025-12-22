@@ -24,8 +24,18 @@ class UploadController extends Controller
             // 生成文件名
             $filename = date('Ymd') . '_' . Str::random(16) . '.' . $file->getClientOriginalExtension();
 
-            // 使用Storage直接存储到public磁盘
-            $path = Storage::disk('public')->putFileAs('uploads', $file, $filename);
+            // 使用Storage存储，强制抛出异常
+            $disk = Storage::build([
+                'driver' => 'local',
+                'root' => storage_path('app/public'),
+                'throw' => true,
+            ]);
+
+            $path = $disk->putFileAs('uploads', $file, $filename);
+
+            if (!$path) {
+                throw new \Exception('文件存储失败');
+            }
 
             // 生成访问URL
             $url = url('storage/' . $path);
