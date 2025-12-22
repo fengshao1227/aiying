@@ -22,10 +22,11 @@ class UploadController extends Controller
             $file = $request->file('file');
 
             // 生成唯一文件名
-            $filename = date('Ymd') . '/' . Str::random(32) . '.' . $file->getClientOriginalExtension();
+            $extension = $file->getClientOriginalExtension();
+            $filename = date('Ymd') . '_' . Str::random(32) . '.' . $extension;
 
             // 存储文件到 public/uploads 目录
-            $path = $file->storeAs('uploads/' . $filename, null, 'public');
+            $path = $file->storeAs('uploads', $filename, 'public');
 
             // 返回完整的可访问 URL
             $url = url('storage/' . $path);
