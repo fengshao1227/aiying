@@ -69,8 +69,12 @@ class ProductAdminController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image_url' => 'sometimes|string',
-            'description' => 'sometimes|string',
+            'image_url' => 'sometimes|nullable|string',
+            'description' => 'sometimes|nullable|string',
+            'summary' => 'sometimes|nullable|string',
+            'cover_image' => 'sometimes|nullable|string',
+            'original_price' => 'sometimes|nullable|numeric|min:0',
+            'unit' => 'sometimes|nullable|string',
             'status' => 'sometimes|in:0,1',
         ]);
 
@@ -109,8 +113,12 @@ class ProductAdminController extends Controller
             'category_id' => 'sometimes|exists:product_categories,id',
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
-            'image_url' => 'sometimes|string',
-            'description' => 'sometimes|string',
+            'image_url' => 'sometimes|nullable|string',
+            'description' => 'sometimes|nullable|string',
+            'summary' => 'sometimes|nullable|string',
+            'cover_image' => 'sometimes|nullable|string',
+            'original_price' => 'sometimes|nullable|numeric|min:0',
+            'unit' => 'sometimes|nullable|string',
             'status' => 'sometimes|in:0,1',
         ]);
 
