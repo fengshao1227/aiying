@@ -19,3 +19,10 @@ auth.json
 npm-debug.log
 yarn-error.log
 /.phpunit.cache
+
+# MCP和AI工具配置
+/.cunzhi-memory/
+/.mcp.json
+
+# 不使用Laravel migrations，使用SQL文件
+/database/migrations/2025_*

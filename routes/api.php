@@ -69,3 +69,59 @@ Route::prefix('points')->group(function () {
     Route::get('/', [PointsController::class, 'index']);
     Route::get('/balance', [PointsController::class, 'balance']);
 });
+
+// ============================================================
+// 后台管理API路由
+// ============================================================
+
+use App\Http\Controllers\Admin\AdminAuthController;
+
+// 管理员认证路由（无需认证）
+Route::prefix('admin')->group(function () {
+    Route::post('/login', [AdminAuthController::class, 'login']);
+});
+
+// 管理员受保护路由（需要认证）
+Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(function () {
+    // 管理员信息
+    Route::get('/info', [AdminAuthController::class, 'info']);
+    Route::post('/logout', [AdminAuthController::class, 'logout']);
+    Route::post('/change-password', [AdminAuthController::class, 'changePassword']);
+
+    // 客户管理
+    Route::prefix('customers')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CustomerController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\CustomerController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy']);
+    });
+
+    // 房间管理
+    Route::prefix('rooms')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\RoomController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\RoomController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'destroy']);
+    });
+
+    // 房态管理
+    Route::prefix('room-status')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\RoomStatusController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\RoomStatusController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\RoomStatusController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\RoomStatusController::class, 'destroy']);
+        Route::post('/check-in', [\App\Http\Controllers\Admin\RoomStatusController::class, 'checkIn']);
+        Route::post('/check-out', [\App\Http\Controllers\Admin\RoomStatusController::class, 'checkOut']);
+    });
+
+    // 评分卡管理
+    Route::prefix('score-cards')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'destroy']);
+    });
+});
