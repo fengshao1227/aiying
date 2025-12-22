@@ -89,9 +89,6 @@ class Order extends Model
         $this->update([
             'payment_status' => 1,
             'order_status' => 1, // 更新为待发货
-            'payment_method' => 'wechat',
-            'transaction_id' => $transactionId,
-            'payment_time' => $paymentData['success_time'] ?? now(),
             'paid_at' => now(),
         ]);
     }
