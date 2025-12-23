@@ -26,15 +26,30 @@ class AuthController extends Controller
             // 获取微信openid
             $wechatData = $this->wechatService->code2Session($request->code);
 
-            // 查找或创建用户
-            $user = User::firstOrCreate(
-                ['openid' => $wechatData['openid']],
-                [
-                    'openid' => $wechatData['openid'],
-                    'name' => '微信用户',
-                    'status' => 1,
-                ]
-            );
+            // 查找用户（包含软删除的记录，防止唯一约束冲突）
+            $user = User::withTrashed()->where('openid', $wechatData['openid'])->first();
+
+            if (!$user) {
+                try {
+                    $user = User::create([
+                        'openid' => $wechatData['openid'],
+                        'name' => '微信用户',
+                        'status' => 1,
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // 处理并发插入导致的唯一约束冲突
+                    if ($e->errorInfo[1] === 1062) {
+                        $user = User::withTrashed()->where('openid', $wechatData['openid'])->first();
+                    } else {
+                        throw $e;
+                    }
+                }
+            }
+
+            // 如果用户曾被软删除，恢复它
+            if ($user->trashed()) {
+                $user->restore();
+            }
 
             // 解密手机号(如果提供)
             if ($request->encrypted_data && $request->iv) {
