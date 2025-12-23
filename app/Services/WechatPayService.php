@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\FamilyMealOrder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -44,6 +45,41 @@ class WechatPayService
      * @return array 小程序支付参数
      */
     public function createJsapiOrder(Order $order, string $openid): array
+    {
+        $url = '/v3/pay/transactions/jsapi';
+        $data = [
+            'appid' => $this->config['appid'],
+            'mchid' => $this->config['mch_id'],
+            'description' => $order->getPaymentDescription(),
+            'out_trade_no' => $order->order_no,
+            'notify_url' => $this->config['notify_url'],
+            'amount' => [
+                'total' => (int) ($order->total_amount * 100), // 转换为分
+                'currency' => 'CNY',
+            ],
+            'payer' => [
+                'openid' => $openid,
+            ],
+        ];
+
+        $response = $this->request('POST', $url, $data);
+
+        if (!isset($response['prepay_id'])) {
+            throw new \Exception('微信下单失败: ' . json_encode($response));
+        }
+
+        // 生成小程序支付参数
+        return $this->generateMiniProgramPayParams($response['prepay_id']);
+    }
+
+    /**
+     * 家属订餐小程序统一下单
+     *
+     * @param FamilyMealOrder $order 订单对象
+     * @param string $openid 用户openid
+     * @return array 小程序支付参数
+     */
+    public function createJsapiOrderForFamilyMeal(FamilyMealOrder $order, string $openid): array
     {
         $url = '/v3/pay/transactions/jsapi';
         $data = [

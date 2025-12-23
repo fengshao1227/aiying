@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\FamilyMealOrder;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\WechatPayService;
@@ -120,6 +121,73 @@ class PaymentController extends Controller
     }
 
     /**
+     * 家属订餐支付
+     * POST /api/family-meals/orders/{id}/pay
+     */
+    public function payFamilyMeal(Request $request, $id): JsonResponse
+    {
+        Log::info('开始处理家属订餐支付请求', [
+            'order_id' => $id,
+            'openid_header' => $request->header('X-Openid'),
+        ]);
+
+        $user = User::where('openid', $request->header('X-Openid'))->first();
+
+        if (!$user) {
+            return response()->json([
+                'code' => 401,
+                'message' => '未登录',
+                'data' => null,
+            ], 401);
+        }
+
+        // 查询家属订餐订单
+        $order = FamilyMealOrder::where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'code' => 404,
+                'message' => '订单不存在',
+                'data' => null,
+            ], 404);
+        }
+
+        // 检查订单状态
+        if (!$order->canPay()) {
+            return response()->json([
+                'code' => 400,
+                'message' => '订单状态不允许支付',
+                'data' => null,
+            ], 400);
+        }
+
+        try {
+            // 调用微信支付统一下单
+            $paymentParams = $this->wechatPayService->createJsapiOrderForFamilyMeal($order, $user->openid);
+
+            return response()->json([
+                'code' => 200,
+                'message' => '支付参数获取成功',
+                'data' => $paymentParams,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('家属订餐发起支付失败', [
+                'order_id' => $order->id,
+                'order_no' => $order->order_no,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'code' => 500,
+                'message' => '发起支付失败：' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    /**
      * 微信支付回调
      * POST /api/payments/wechat/notify
      */
@@ -169,8 +237,15 @@ class PaymentController extends Controller
         $tradeState = $data['trade_state'] ?? '';
         $successTime = $data['success_time'] ?? null;
 
-        // 查询订单
+        // 先查普通订单
         $order = Order::where('order_no', $outTradeNo)->first();
+        $isFamilyMeal = false;
+
+        // 如果普通订单不存在，查家属订餐订单
+        if (!$order) {
+            $order = FamilyMealOrder::where('order_no', $outTradeNo)->first();
+            $isFamilyMeal = true;
+        }
 
         if (!$order) {
             Log::warning('支付回调订单不存在', ['order_no' => $outTradeNo]);
@@ -204,12 +279,16 @@ class PaymentController extends Controller
         DB::beginTransaction();
         try {
             // 更新订单状态
-            $order->markAsPaid($transactionId, [
-                'trade_state' => $tradeState,
-                'success_time' => $successTime,
-                'transaction_id' => $transactionId,
-                'payer_openid' => $data['payer']['openid'] ?? '',
-            ]);
+            if ($isFamilyMeal) {
+                $order->markAsPaid($transactionId);
+            } else {
+                $order->markAsPaid($transactionId, [
+                    'trade_state' => $tradeState,
+                    'success_time' => $successTime,
+                    'transaction_id' => $transactionId,
+                    'payer_openid' => $data['payer']['openid'] ?? '',
+                ]);
+            }
 
             // 创建支付记录
             Payment::create([
@@ -229,16 +308,19 @@ class PaymentController extends Controller
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
                 'transaction_id' => $transactionId,
+                'is_family_meal' => $isFamilyMeal,
             ]);
 
-            // 发送企业微信通知（异步，不影响主流程）
-            try {
-                $this->notifyService->sendPaymentSuccessNotify($order);
-            } catch (\Exception $e) {
-                Log::error('发送企业微信通知失败', [
-                    'order_no' => $order->order_no,
-                    'error' => $e->getMessage(),
-                ]);
+            // 发送企业微信通知（异步，不影响主流程）- 仅普通订单
+            if (!$isFamilyMeal) {
+                try {
+                    $this->notifyService->sendPaymentSuccessNotify($order);
+                } catch (\Exception $e) {
+                    Log::error('发送企业微信通知失败', [
+                        'order_no' => $order->order_no,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         } catch (\Exception $e) {
             DB::rollBack();

@@ -68,6 +68,7 @@ Route::prefix('family-meals')->group(function () {
     Route::post('/orders', [FamilyMealController::class, 'storeOrder']);
     Route::get('/orders/list', [FamilyMealController::class, 'orderList']);
     Route::get('/orders/{id}', [FamilyMealController::class, 'orderDetail']);
+    Route::post('/orders/{id}/pay', [\App\Http\Controllers\Api\PaymentController::class, 'payFamilyMeal']);
     Route::post('/orders/{id}/cancel', [FamilyMealController::class, 'cancelOrder']);
 });
 
