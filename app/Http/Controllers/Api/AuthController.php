@@ -194,6 +194,26 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            // 检查手机号是否已被其他用户占用（包含软删除的）
+            $existingUser = User::withTrashed()
+                ->where('phone', $phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existingUser) {
+                if ($existingUser->trashed()) {
+                    // 旧用户已软删除，清除其手机号后允许绑定
+                    $existingUser->update(['phone' => null]);
+                } else {
+                    // 旧用户正常状态，拒绝绑定
+                    return response()->json([
+                        'code' => 400,
+                        'message' => '该手机号已被其他账号绑定',
+                        'data' => null,
+                    ], 400);
+                }
+            }
+
             // 更新用户手机号
             $user->update(['phone' => $phone]);
 
