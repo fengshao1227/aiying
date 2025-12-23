@@ -87,10 +87,22 @@ class AuthController extends Controller
             ], 404);
         }
 
+        // 如果用户有手机号,查询是否是月子中心客户
+        $customerName = null;
+        if ($user->phone) {
+            $customer = \App\Models\Customer::where('phone', $user->phone)->first();
+            if ($customer) {
+                $customerName = $customer->customer_name;
+            }
+        }
+
+        $userData = $user->toArray();
+        $userData['customer_name'] = $customerName; // 添加客户姓名字段
+
         return response()->json([
             'code' => 200,
             'message' => '获取成功',
-            'data' => $user,
+            'data' => $userData,
         ]);
     }
 
