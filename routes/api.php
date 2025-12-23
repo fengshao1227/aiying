@@ -178,6 +178,14 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::delete('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'destroy']);
     });
 
+    // 家属订餐订单管理
+    Route::prefix('family-meal-orders')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'show']);
+        Route::put('/{id}/status', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'updateStatus']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'destroy']);
+    });
+
     // 套餐管理
     Route::prefix('packages')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\PackageController::class, 'index']);

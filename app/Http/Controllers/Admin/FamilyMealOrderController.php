@@ -3,18 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
+use App\Models\FamilyMealOrder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
-class OrderAdminController extends Controller
+class FamilyMealOrderController extends Controller
 {
     /**
-     * 获取订单列表
+     * 获取家属订餐订单列表
      */
     public function index(Request $request)
     {
-        $query = Order::with('user');
+        $query = FamilyMealOrder::with('user');
 
         // 状态筛选
         if ($request->has('order_status') && $request->order_status !== null) {
@@ -22,10 +21,10 @@ class OrderAdminController extends Controller
         }
 
         // 日期筛选
-        if ($request->has('start_date')) {
+        if ($request->has('start_date') && $request->start_date) {
             $query->whereDate('created_at', '>=', $request->start_date);
         }
-        if ($request->has('end_date')) {
+        if ($request->has('end_date') && $request->end_date) {
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
@@ -44,7 +43,7 @@ class OrderAdminController extends Controller
      */
     public function show($id)
     {
-        $order = Order::with(['user', 'items.product'])->find($id);
+        $order = FamilyMealOrder::with(['user', 'package'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -65,7 +64,7 @@ class OrderAdminController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $order = Order::find($id);
+        $order = FamilyMealOrder::find($id);
 
         if (!$order) {
             return response()->json([
@@ -74,56 +73,7 @@ class OrderAdminController extends Controller
             ], 404);
         }
 
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'code' => 400,
-                'message' => $validator->errors()->first(),
-            ], 400);
-        }
-
-        $order->status = $request->status;
-        $order->save();
-
-        return response()->json([
-            'code' => 200,
-            'message' => '更新成功',
-            'data' => $order,
-        ]);
-    }
-
-    /**
-     * 更新配送信息
-     */
-    public function updateDelivery(Request $request, $id)
-    {
-        $order = Order::find($id);
-
-        if (!$order) {
-            return response()->json([
-                'code' => 404,
-                'message' => '订单不存在',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'delivery_company' => 'required|string',
-            'tracking_no' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'code' => 400,
-                'message' => $validator->errors()->first(),
-            ], 400);
-        }
-
-        $order->delivery_company = $request->delivery_company;
-        $order->tracking_no = $request->tracking_no;
-        $order->status = 'shipped';
+        $order->order_status = $request->order_status;
         $order->save();
 
         return response()->json([
@@ -138,7 +88,7 @@ class OrderAdminController extends Controller
      */
     public function destroy($id)
     {
-        $order = Order::find($id);
+        $order = FamilyMealOrder::find($id);
 
         if (!$order) {
             return response()->json([
