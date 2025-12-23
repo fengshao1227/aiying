@@ -128,18 +128,21 @@ class FamilyMealController extends Controller
             'meal_times' => 'required|array',
             'quantity' => 'nullable|integer|min:1',
             'remarks' => 'nullable|string|max:500',
-            'meal_id' => 'nullable|integer|exists:family_meal_packages,id',
+            'meal_id' => 'nullable|integer',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // 获取套餐信息(如果有)
+            // 获取套餐信息(如果有)，支持通过id或product_id查找
             $package = null;
             $unitPrice = 0;
 
             if (!empty($validated['meal_id'])) {
-                $package = FamilyMealPackage::find($validated['meal_id']);
+                // 先尝试通过id查找，再通过product_id查找
+                $package = FamilyMealPackage::where('id', $validated['meal_id'])
+                    ->orWhere('product_id', $validated['meal_id'])
+                    ->first();
                 if ($package) {
                     $unitPrice = $package->price;
                 }
