@@ -168,12 +168,22 @@ class AuthController extends Controller
             // 更新用户手机号
             $user->update(['phone' => $phone]);
 
+            // 查询是否是月子中心客户
+            $customerName = null;
+            $customer = \App\Models\Customer::where('phone', $phone)->first();
+            if ($customer) {
+                $customerName = $customer->customer_name;
+            }
+
+            $userData = $user->toArray();
+            $userData['customer_name'] = $customerName;
+
             return response()->json([
                 'code' => 200,
                 'message' => '绑定成功',
                 'data' => [
                     'phone' => $phone,
-                    'user' => $user,
+                    'user' => $userData,
                 ],
             ]);
         } catch (\Exception $e) {
