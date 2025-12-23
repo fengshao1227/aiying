@@ -39,7 +39,8 @@ class RoomStatusController extends Controller
 
         // 获取所有房间及其房态
         $rooms = Room::with(['roomStatuses' => function ($query) use ($recordMonth) {
-            $query->where('record_month', $recordMonth);
+            $query->where('record_month', $recordMonth)
+                  ->with('customer'); // 加载客户信息
         }])->orderBy('display_order')->get();
 
         return response()->json([
