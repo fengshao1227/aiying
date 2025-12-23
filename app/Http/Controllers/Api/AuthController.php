@@ -31,6 +31,7 @@ class AuthController extends Controller
                 ['openid' => $wechatData['openid']],
                 [
                     'openid' => $wechatData['openid'],
+                    'name' => '微信用户',
                     'status' => 1,
                 ]
             );
@@ -54,11 +55,24 @@ class AuthController extends Controller
             // 生成简单token(或使用Sanctum)
             $token = Str::random(60);
 
+            // 查询是否是月子中心客户
+            $customerName = null;
+            if ($user->phone) {
+                $customer = \App\Models\Customer::where('phone', $user->phone)->first();
+                if ($customer) {
+                    $customerName = $customer->customer_name;
+                }
+            }
+
+            $userData = $user->toArray();
+            $userData['customer_name'] = $customerName;
+            $userData['nickname'] = $user->name; // 兼容前端nickname字段
+
             return response()->json([
                 'code' => 200,
                 'message' => '登录成功',
                 'data' => [
-                    'user' => $user,
+                    'user' => $userData,
                     'token' => $token,
                     'session_key' => $wechatData['session_key'],
                 ],

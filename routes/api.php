@@ -64,6 +64,11 @@ Route::prefix('orders')->group(function () {
 Route::prefix('family-meals')->group(function () {
     Route::get('/', [FamilyMealController::class, 'index']);
     Route::get('/{id}', [FamilyMealController::class, 'show']);
+    // 家属订餐订单
+    Route::post('/orders', [FamilyMealController::class, 'storeOrder']);
+    Route::get('/orders/list', [FamilyMealController::class, 'orderList']);
+    Route::get('/orders/{id}', [FamilyMealController::class, 'orderDetail']);
+    Route::post('/orders/{id}/cancel', [FamilyMealController::class, 'cancelOrder']);
 });
 
 // 积分路由
