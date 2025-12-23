@@ -132,4 +132,26 @@ class OrderAdminController extends Controller
             'data' => $order,
         ]);
     }
+
+    /**
+     * 删除订单（软删除）
+     */
+    public function destroy($id)
+    {
+        $order = Order::find($id);
+
+        if (!$order) {
+            return response()->json([
+                'code' => 404,
+                'message' => '订单不存在',
+            ], 404);
+        }
+
+        $order->delete();
+
+        return response()->json([
+            'code' => 200,
+            'message' => '删除成功',
+        ]);
+    }
 }

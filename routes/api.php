@@ -143,6 +143,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::put('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update']);
         Route::put('/{id}/points', [\App\Http\Controllers\Admin\UserController::class, 'updatePoints']);
         Route::get('/{id}/orders', [\App\Http\Controllers\Admin\UserController::class, 'orders']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy']);
     });
 
     // 商品管理
@@ -157,6 +158,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
     // 商品分类管理
     Route::prefix('categories')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\CategoryController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\CategoryController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Admin\CategoryController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\CategoryController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\CategoryController::class, 'destroy']);
     });
 
     // 订单管理
@@ -165,6 +170,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::get('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'show']);
         Route::put('/{id}/status', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateStatus']);
         Route::put('/{id}/delivery', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateDelivery']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'destroy']);
     });
 
     // 套餐管理

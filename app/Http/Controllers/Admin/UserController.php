@@ -162,4 +162,26 @@ class UserController extends Controller
             'data' => $orders,
         ]);
     }
+
+    /**
+     * 删除用户（软删除）
+     */
+    public function destroy($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'code' => 404,
+                'message' => '用户不存在',
+            ], 404);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'code' => 200,
+            'message' => '删除成功',
+        ]);
+    }
 }
