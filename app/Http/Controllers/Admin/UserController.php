@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PointsHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -127,16 +129,34 @@ class UserController extends Controller
             ], 400);
         }
 
-        $user->points_balance = $newBalance;
-        $user->save();
+        try {
+            DB::transaction(function () use ($user, $request, $newBalance) {
+                // 更新用户积分余额
+                $user->points_balance = $newBalance;
+                $user->save();
 
-        // TODO: 记录积分变动日志
+                // 记录积分变动历史
+                PointsHistory::create([
+                    'user_id' => $user->id,
+                    'type' => $request->points > 0 ? 'earn' : 'spend',
+                    'points' => $request->points,
+                    'balance_after' => $newBalance,
+                    'source' => 'admin',
+                    'description' => $request->reason,
+                ]);
+            });
 
-        return response()->json([
-            'code' => 200,
-            'message' => '积分调整成功',
-            'data' => $user,
-        ]);
+            return response()->json([
+                'code' => 200,
+                'message' => '积分调整成功',
+                'data' => $user->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => '积分调整失败：' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
