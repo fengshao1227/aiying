@@ -29,11 +29,11 @@ class CategoryController extends Controller
     /**
      * 构建树形结构
      */
-    private function buildTree($categories, $parentId = null)
+    private function buildTree($categories, $parentId = 0)
     {
         $result = [];
         foreach ($categories as $category) {
-            if ($category->parent_id === $parentId) {
+            if ($category->parent_id == $parentId) {
                 $children = $this->buildTree($categories, $category->id);
                 $item = $category->toArray();
                 if (count($children) > 0) {
@@ -88,7 +88,7 @@ class CategoryController extends Controller
 
         $category = ProductCategory::create([
             'name' => $request->name,
-            'parent_id' => $request->parent_id,
+            'parent_id' => $request->parent_id ?? 0,
             'icon' => $request->icon,
             'sort_order' => $request->sort_order ?? 0,
             'status' => $request->status ?? 1,
