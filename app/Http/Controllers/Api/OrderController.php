@@ -142,8 +142,13 @@ class OrderController extends Controller
                 ], 400);
             }
 
-            // 计算总金额
+            // 是否使用积分全额兑换
+            $payWithPoints = $request->boolean('pay_with_points', false);
+
+            // 计算总金额和积分价格
             $goodsAmount = 0;
+            $totalPointsRequired = 0;
+
             foreach ($cartItems as $item) {
                 // 验证库存
                 if ($item->specification_id) {
@@ -172,29 +177,60 @@ class OrderController extends Controller
                     : $item->product->price;
 
                 $goodsAmount += $itemPrice * $item->quantity;
+
+                // 计算积分价格
+                if ($payWithPoints) {
+                    $pointsPrice = $item->product->points_price;
+                    if (empty($pointsPrice) || $pointsPrice <= 0) {
+                        DB::rollBack();
+                        return response()->json([
+                            'code' => 400,
+                            'message' => $item->product->name . ' 不支持积分兑换',
+                            'data' => null,
+                        ], 400);
+                    }
+                    $totalPointsRequired += $pointsPrice * $item->quantity;
+                }
             }
 
-            // 计算积分抵扣
-            $pointsUsed = $request->points_used ?? 0;
+            // 积分兑换模式
+            $pointsUsed = 0;
             $pointsDiscount = 0;
 
-            if ($pointsUsed > 0) {
-                if ($pointsUsed > $user->points_balance) {
+            if ($payWithPoints) {
+                // 验证用户积分是否足够
+                if ($totalPointsRequired > $user->points_balance) {
                     DB::rollBack();
                     return response()->json([
                         'code' => 400,
-                        'message' => '积分余额不足',
+                        'message' => '积分余额不足，需要 ' . $totalPointsRequired . ' 积分',
                         'data' => null,
                     ], 400);
                 }
+                $pointsUsed = $totalPointsRequired;
+                $pointsDiscount = $goodsAmount; // 积分抵扣全部金额
+            } else {
+                // 原有的积分抵扣逻辑
+                $pointsUsed = $request->points_used ?? 0;
 
-                // 100积分 = 1元
-                $pointsDiscount = round($pointsUsed / 100, 2);
+                if ($pointsUsed > 0) {
+                    if ($pointsUsed > $user->points_balance) {
+                        DB::rollBack();
+                        return response()->json([
+                            'code' => 400,
+                            'message' => '积分余额不足',
+                            'data' => null,
+                        ], 400);
+                    }
 
-                // 积分抵扣不能超过订单金额
-                if ($pointsDiscount > $goodsAmount) {
-                    $pointsDiscount = $goodsAmount;
-                    $pointsUsed = $pointsDiscount * 100;
+                    // 100积分 = 1元
+                    $pointsDiscount = round($pointsUsed / 100, 2);
+
+                    // 积分抵扣不能超过订单金额
+                    if ($pointsDiscount > $goodsAmount) {
+                        $pointsDiscount = $goodsAmount;
+                        $pointsUsed = $pointsDiscount * 100;
+                    }
                 }
             }
 
@@ -203,6 +239,13 @@ class OrderController extends Controller
 
             // 计算总金额
             $totalAmount = $goodsAmount + $shippingFee - $pointsDiscount;
+            if ($totalAmount < 0) {
+                $totalAmount = 0;
+            }
+
+            // 积分全额兑换时，订单直接标记为已支付
+            $orderStatus = ($payWithPoints && $totalAmount == 0) ? 1 : 0;
+            $paymentStatus = ($payWithPoints && $totalAmount == 0) ? 1 : 0;
 
             // 创建订单
             $orderData = [
@@ -214,9 +257,10 @@ class OrderController extends Controller
                 'points_used' => $pointsUsed,
                 'points_discount' => $pointsDiscount,
                 'total_amount' => $totalAmount,
-                'order_status' => 0,
-                'payment_status' => 0,
+                'order_status' => $orderStatus,
+                'payment_status' => $paymentStatus,
                 'remark' => $request->remark,
+                'paid_at' => $paymentStatus == 1 ? now() : null,
             ];
 
             // 根据订单类型填充不同字段
