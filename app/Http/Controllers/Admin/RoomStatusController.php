@@ -239,10 +239,10 @@ class RoomStatusController extends Controller
                 ]);
             }
 
-            DB::commit();
-
-            // 入住赠送积分
+            // 入住赠送积分（事务内）
             $this->grantCheckinPoints($request->customer_id);
+
+            DB::commit();
 
             return response()->json([
                 'code' => 200,
@@ -271,18 +271,20 @@ class RoomStatusController extends Controller
             return;
         }
 
-        $users = User::where('customer_id', $customerId)->get();
-        foreach ($users as $user) {
-            try {
-                $user->addPoints($points, 'earn', 'checkin', null, '入住赠送积分');
-            } catch (\Exception $e) {
-                Log::error('Grant checkin points failed', [
-                    'user_id' => $user->id,
-                    'customer_id' => $customerId,
-                    'points' => $points,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+        $user = User::where('customer_id', $customerId)->first();
+        if (!$user) {
+            return;
+        }
+
+        try {
+            $user->addPoints($points, 'earn', 'checkin', null, '入住赠送积分');
+        } catch (\Exception $e) {
+            Log::error('Grant checkin points failed', [
+                'user_id' => $user->id,
+                'customer_id' => $customerId,
+                'points' => $points,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

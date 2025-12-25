@@ -3,6 +3,7 @@
 namespace App\Services\V2;
 
 use App\Models\V2\MealOrder;
+use App\Models\V2\SystemConfig;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -32,25 +33,26 @@ class WeworkNotifyService
 
         $deliveryType = $order->delivery_type === 'express' ? '快递配送' : '送到房间';
 
-        $content = sprintf(
-            "🛒 **新商城订单**\n\n" .
-            "**订单号**: %s\n" .
-            "**客户**: %s\n" .
-            "**收货人**: %s\n" .
-            "**配送方式**: %s\n" .
-            "**商品详情**:\n%s\n\n" .
-            "**订单金额**: ¥%.2f\n" .
-            "**实付金额**: ¥%.2f\n" .
-            "**支付时间**: %s",
-            $order->order_no,
-            $customerName,
-            $receiverInfo,
-            $deliveryType,
-            implode("\n", $itemDetails),
-            $order->total_amount,
-            $order->actual_amount,
-            $order->paid_at?->format('Y-m-d H:i:s') ?? now()->format('Y-m-d H:i:s')
-        );
+        $defaultTemplate = "🛒 **新商城订单**\n\n" .
+            "**订单号**: {order_no}\n" .
+            "**客户**: {customer_name}\n" .
+            "**收货人**: {receiver_name}\n" .
+            "**配送方式**: {delivery_type}\n" .
+            "**商品详情**:\n{item_details}\n\n" .
+            "**订单金额**: ¥{total_amount}\n" .
+            "**实付金额**: ¥{actual_amount}\n" .
+            "**支付时间**: {paid_at}";
+
+        $content = $this->renderTemplate('notify_template_mall_order', $defaultTemplate, [
+            'order_no' => $order->order_no,
+            'customer_name' => $customerName,
+            'receiver_name' => $receiverInfo,
+            'delivery_type' => $deliveryType,
+            'item_details' => implode("\n", $itemDetails),
+            'total_amount' => sprintf('%.2f', $order->total_amount),
+            'actual_amount' => sprintf('%.2f', $order->actual_amount),
+            'paid_at' => $order->paid_at?->format('Y-m-d H:i:s') ?? now()->format('Y-m-d H:i:s'),
+        ]);
 
         return $this->sendMarkdown($content, 'new_mall_order', $order->id);
     }
@@ -76,23 +78,24 @@ class WeworkNotifyService
             );
         }
 
-        $content = sprintf(
-            "🍽️ **新订餐订单**\n\n" .
-            "**订单号**: %s\n" .
-            "**客户**: %s\n" .
-            "**房间**: %s\n" .
-            "**订餐详情**:\n%s\n\n" .
-            "**订单金额**: ¥%.2f\n" .
-            "**实付金额**: ¥%.2f\n" .
-            "**支付时间**: %s",
-            $order->order_no,
-            $customerName,
-            $roomName,
-            implode("\n", $mealDetails),
-            $order->total_amount,
-            $order->actual_amount,
-            $order->paid_at?->format('Y-m-d H:i:s') ?? now()->format('Y-m-d H:i:s')
-        );
+        $defaultTemplate = "🍽️ **新订餐订单**\n\n" .
+            "**订单号**: {order_no}\n" .
+            "**客户**: {customer_name}\n" .
+            "**房间**: {room_name}\n" .
+            "**订餐详情**:\n{meal_details}\n\n" .
+            "**订单金额**: ¥{total_amount}\n" .
+            "**实付金额**: ¥{actual_amount}\n" .
+            "**支付时间**: {paid_at}";
+
+        $content = $this->renderTemplate('notify_template_meal_order', $defaultTemplate, [
+            'order_no' => $order->order_no,
+            'customer_name' => $customerName,
+            'room_name' => $roomName,
+            'meal_details' => implode("\n", $mealDetails),
+            'total_amount' => sprintf('%.2f', $order->total_amount),
+            'actual_amount' => sprintf('%.2f', $order->actual_amount),
+            'paid_at' => $order->paid_at?->format('Y-m-d H:i:s') ?? now()->format('Y-m-d H:i:s'),
+        ]);
 
         return $this->sendMarkdown($content, 'new_meal_order', $order->id);
     }
@@ -121,18 +124,19 @@ class WeworkNotifyService
             return true;
         }
 
-        $content = sprintf(
-            "📊 **%s 订餐统计**\n\n" .
-            "🌅 早餐: **%d** 份\n" .
-            "☀️ 午餐: **%d** 份\n" .
-            "🌙 晚餐: **%d** 份\n\n" .
-            "**合计**: %d 份",
-            $date,
-            $breakfast,
-            $lunch,
-            $dinner,
-            $total
-        );
+        $defaultTemplate = "📊 **{date} 订餐统计**\n\n" .
+            "🌅 早餐: **{breakfast}** 份\n" .
+            "☀️ 午餐: **{lunch}** 份\n" .
+            "🌙 晚餐: **{dinner}** 份\n\n" .
+            "**合计**: {total} 份";
+
+        $content = $this->renderTemplate('notify_template_daily_report', $defaultTemplate, [
+            'date' => $date,
+            'breakfast' => $breakfast,
+            'lunch' => $lunch,
+            'dinner' => $dinner,
+            'total' => $total,
+        ]);
 
         return $this->sendMarkdown($content, 'daily_meal_report');
     }
@@ -219,5 +223,19 @@ class WeworkNotifyService
             'dinner' => '晚餐',
             default => $type,
         };
+    }
+
+    /**
+     * 渲染通知模板
+     */
+    protected function renderTemplate(string $configKey, string $defaultTemplate, array $variables): string
+    {
+        $template = SystemConfig::getValue($configKey, '') ?: $defaultTemplate;
+
+        foreach ($variables as $key => $value) {
+            $template = str_replace('{' . $key . '}', (string) $value, $template);
+        }
+
+        return $template;
     }
 }

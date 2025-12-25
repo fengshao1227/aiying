@@ -11,6 +11,14 @@ class MealOrderReportController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'group_by' => 'nullable|in:day,month',
+            'room_id' => 'nullable|integer',
+            'customer_id' => 'nullable|integer',
+        ]);
+
         $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
         $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
         $groupBy = $request->input('group_by', 'day');

@@ -163,77 +163,86 @@ class UserController extends Controller
             ], 400);
         }
 
-        $user = $request->attributes->get('v2_user');
-        $phone = $request->phone;
+        try {
+            $user = $request->attributes->get('v2_user');
+            $phone = $request->phone;
 
-        // 检查用户是否已绑定
-        if ($user->isBound()) {
+            // 检查用户是否已绑定
+            if ($user->isBound()) {
+                return response()->json([
+                    'code' => 400,
+                    'message' => '您已绑定客户，无需重复绑定',
+                    'data' => null,
+                ], 400);
+            }
+
+            // 查找客户
+            $customer = Customer::where('phone', $phone)->first();
+
+            if (!$customer) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => '未找到该手机号对应的客户记录，请联系前台确认',
+                    'data' => null,
+                ], 404);
+            }
+
+            // 检查该客户是否已被其他用户绑定
+            $existingUser = User::where('customer_id', $customer->customer_id)
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existingUser) {
+                return response()->json([
+                    'code' => 400,
+                    'message' => '该客户已被其他用户绑定',
+                    'data' => null,
+                ], 400);
+            }
+
+            // 绑定客户
+            $user->update([
+                'customer_id' => $customer->customer_id,
+                'bind_phone' => $phone,
+            ]);
+
+            // 重新加载用户数据
+            $user->load('customer');
+
+            $userData = [
+                'id' => $user->id,
+                'openid' => $user->openid,
+                'nickname' => $user->nickname,
+                'avatar' => $user->avatar,
+                'gender' => $user->gender,
+                'phone' => $user->phone,
+                'bindPhone' => $user->bind_phone,
+                'pointsBalance' => $user->points_balance,
+                'isBound' => $user->isBound(),
+                'status' => $user->status,
+                'customer' => [
+                    'id' => $customer->customer_id,
+                    'name' => $customer->customer_name,
+                    'phone' => $customer->phone,
+                    'packageName' => $customer->package_name ?? null,
+                    'babyName' => $customer->baby_name ?? null,
+                    'checkInDate' => $customer->check_in_date?->toISOString(),
+                    'checkOutDate' => $customer->check_out_date?->toISOString(),
+                ],
+            ];
+
             return response()->json([
-                'code' => 400,
-                'message' => '您已绑定客户，无需重复绑定',
-                'data' => null,
-            ], 400);
-        }
-
-        // 查找客户
-        $customer = Customer::where('phone', $phone)->first();
-
-        if (!$customer) {
+                'code' => 0,
+                'message' => '绑定成功',
+                'data' => $userData,
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
-                'code' => 404,
-                'message' => '未找到该手机号对应的客户记录，请联系前台确认',
+                'code' => 500,
+                'message' => '绑定失败: ' . $e->getMessage(),
                 'data' => null,
-            ], 404);
+            ], 500);
         }
-
-        // 检查该客户是否已被其他用户绑定
-        $existingUser = User::where('customer_id', $customer->customer_id)
-            ->where('id', '!=', $user->id)
-            ->first();
-
-        if ($existingUser) {
-            return response()->json([
-                'code' => 400,
-                'message' => '该客户已被其他用户绑定',
-                'data' => null,
-            ], 400);
-        }
-
-        // 绑定客户
-        $user->update([
-            'customer_id' => $customer->customer_id,
-            'bind_phone' => $phone,
-        ]);
-
-        // 重新加载用户数据
-        $user->load('customer');
-
-        $userData = [
-            'id' => $user->id,
-            'nickname' => $user->nickname,
-            'avatar' => $user->avatar,
-            'gender' => $user->gender,
-            'phone' => $user->phone,
-            'bindPhone' => $user->bind_phone,
-            'pointsBalance' => $user->points_balance,
-            'isBound' => $user->isBound(),
-            'status' => $user->status,
-            'customer' => [
-                'id' => $customer->customer_id,
-                'name' => $customer->customer_name,
-                'phone' => $customer->phone,
-                'packageName' => $customer->package_name,
-                'babyName' => $customer->baby_name,
-                'checkInDate' => $customer->check_in_date?->toISOString(),
-                'checkOutDate' => $customer->check_out_date?->toISOString(),
-            ],
-        ];
-
-        return response()->json([
-            'code' => 0,
-            'message' => '绑定成功',
-            'data' => $userData,
-        ]);
     }
 
     /**
