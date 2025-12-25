@@ -200,4 +200,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::delete('/{id}', [\App\Http\Controllers\Admin\PackageController::class, 'destroy']);
         Route::put('/{id}/status', [\App\Http\Controllers\Admin\PackageController::class, 'updateStatus']);
     });
+
+    // 报表统计
+    Route::prefix('reports')->group(function () {
+        Route::get('/meal-orders', [\App\Http\Controllers\Admin\Reports\MealOrderReportController::class, 'index']);
+    });
 });

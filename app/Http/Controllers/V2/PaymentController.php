@@ -158,6 +158,10 @@ class PaymentController extends Controller
                     }
 
                     $mallOrder->markAsPaid($transactionId);
+
+                    // 消费返积分
+                    $this->grantConsumptionPoints($mallOrder->user, $mallOrder->actual_amount, 'order', $mallOrder->id);
+
                     $mallOrderToNotify = $mallOrder->fresh(['items', 'customer']);
                     return 'mall_order_paid';
                 }
@@ -184,6 +188,10 @@ class PaymentController extends Controller
                     }
 
                     $mealOrder->markAsPaid($transactionId);
+
+                    // 消费返积分
+                    $this->grantConsumptionPoints($mealOrder->user, $mealOrder->actual_amount, 'meal', $mealOrder->id);
+
                     $mealOrderToNotify = $mealOrder->fresh(['items', 'customer']);
                     return 'meal_order_paid';
                 }
@@ -258,5 +266,36 @@ class PaymentController extends Controller
             'message' => $message,
             'data' => null,
         ], $httpCode);
+    }
+
+    protected function grantConsumptionPoints(?User $user, $amount, string $source, int $sourceId): void
+    {
+        if (!$user) {
+            return;
+        }
+
+        $rate = SystemConfig::getConsumptionPointsRate();
+        if ($rate <= 0) {
+            return;
+        }
+
+        $points = (int) bcmul((string) $amount, (string) $rate, 0);
+        if ($points <= 0) {
+            return;
+        }
+
+        try {
+            $description = $source === 'meal' ? '订餐消费返积分' : '商城消费返积分';
+            $user->addPoints($points, 'earn', $source, $sourceId, $description);
+        } catch (\Exception $e) {
+            Log::error('Grant consumption points failed', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'points' => $points,
+                'source' => $source,
+                'source_id' => $sourceId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
