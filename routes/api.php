@@ -176,6 +176,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::get('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'show']);
         Route::put('/{id}/status', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateStatus']);
         Route::put('/{id}/delivery', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateDelivery']);
+        Route::post('/{id}/refund/approve', [\App\Http\Controllers\Admin\OrderAdminController::class, 'approveRefund']);
+        Route::post('/{id}/refund/reject', [\App\Http\Controllers\Admin\OrderAdminController::class, 'rejectRefund']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'destroy']);
     });
 
@@ -184,6 +186,8 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::get('/', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'index']);
         Route::get('/{id}', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'show']);
         Route::put('/{id}/status', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'updateStatus']);
+        Route::post('/{id}/refund/approve', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'approveRefund']);
+        Route::post('/{id}/refund/reject', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'rejectRefund']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\FamilyMealOrderController::class, 'destroy']);
     });
 

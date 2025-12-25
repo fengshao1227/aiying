@@ -9,6 +9,8 @@ use App\Services\V2\OrderService;
 use App\Services\V2\MealOrderService;
 use App\Services\V2\RefundService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -297,6 +299,48 @@ class OrderController extends Controller
                 'data' => $order,
             ]);
         } catch (\Exception $e) {
+            return response()->json([
+                'code' => 400,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ], 400);
+        }
+    }
+
+    public function confirmReceipt(Request $request, $id)
+    {
+        try {
+            $user = $request->attributes->get('v2_user');
+
+            return DB::transaction(function () use ($user, $id) {
+                $order = Order::forUser($user->id)->lockForUpdate()->find($id);
+
+                if (!$order) {
+                    return response()->json([
+                        'code' => 404,
+                        'message' => '订单不存在',
+                        'data' => null,
+                    ], 404);
+                }
+
+                if (!$order->canConfirm()) {
+                    return response()->json([
+                        'code' => 400,
+                        'message' => '当前订单状态不允许确认收货',
+                        'data' => null,
+                    ], 400);
+                }
+
+                $order->markAsCompleted();
+
+                return response()->json([
+                    'code' => 0,
+                    'message' => '确认收货成功',
+                    'data' => $order,
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Confirm receipt failed', ['order_id' => $id, 'exception' => $e]);
             return response()->json([
                 'code' => 400,
                 'message' => $e->getMessage(),

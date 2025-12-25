@@ -71,6 +71,7 @@ Route::prefix('orders')->middleware('v2.user.auth')->group(function () {
     Route::post('/mall/{id}/cancel', [OrderController::class, 'cancelMallOrder']);
     Route::post('/mall/{id}/pay', [PaymentController::class, 'payMallOrder']);
     Route::post('/mall/{id}/refund', [OrderController::class, 'refundMallOrder']);
+    Route::post('/mall/{id}/confirm', [OrderController::class, 'confirmReceipt']);
 
     // 订餐订单
     Route::post('/meal', [OrderController::class, 'createMealOrder']);

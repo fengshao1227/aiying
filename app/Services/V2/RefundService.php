@@ -183,6 +183,22 @@ class RefundService
         return $order;
     }
 
+    /**
+     * 拒绝订餐退款
+     */
+    public function rejectMealRefund(MealOrder $order, string $reason): MealOrder
+    {
+        if ($order->refund_status !== MealOrder::REFUND_APPLYING) {
+            throw new \Exception('订单未在退款申请状态');
+        }
+
+        $order->refund_status = MealOrder::REFUND_REJECTED;
+        $order->refund_reason = $reason;
+        $order->save();
+
+        return $order;
+    }
+
     protected function canApplyRefund(Order $order): bool
     {
         return $order->payment_status === Order::PAYMENT_STATUS_PAID

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\FamilyMealOrder;
+use App\Models\V2\MealOrder;
+use App\Services\V2\RefundService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FamilyMealOrderController extends Controller
 {
@@ -13,7 +16,7 @@ class FamilyMealOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = FamilyMealOrder::with('user');
+        $query = MealOrder::with('user');
 
         // 状态筛选
         if ($request->has('order_status') && $request->order_status !== null) {
@@ -43,7 +46,7 @@ class FamilyMealOrderController extends Controller
      */
     public function show($id)
     {
-        $order = FamilyMealOrder::with(['user', 'package'])->find($id);
+        $order = MealOrder::with(['user', 'items'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -64,7 +67,7 @@ class FamilyMealOrderController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $order = FamilyMealOrder::find($id);
+        $order = MealOrder::find($id);
 
         if (!$order) {
             return response()->json([
@@ -88,7 +91,7 @@ class FamilyMealOrderController extends Controller
      */
     public function destroy($id)
     {
-        $order = FamilyMealOrder::find($id);
+        $order = MealOrder::find($id);
 
         if (!$order) {
             return response()->json([
@@ -103,5 +106,48 @@ class FamilyMealOrderController extends Controller
             'code' => 200,
             'message' => '删除成功',
         ]);
+    }
+
+    public function approveRefund($id, RefundService $refundService)
+    {
+        try {
+            return DB::transaction(function () use ($id, $refundService) {
+                $order = MealOrder::lockForUpdate()->find($id);
+
+                if (!$order) {
+                    return response()->json(['code' => 404, 'message' => '订单不存在'], 404);
+                }
+
+                if ($order->refund_status !== MealOrder::REFUND_APPLYING) {
+                    return response()->json(['code' => 400, 'message' => '订单未在退款申请状态'], 400);
+                }
+
+                $refundService->processMealRefund($order);
+                return response()->json(['code' => 200, 'message' => '退款处理成功', 'data' => $order->fresh()]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Admin approve meal refund failed', ['order_id' => $id, 'exception' => $e]);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function rejectRefund(Request $request, $id, RefundService $refundService)
+    {
+        try {
+            return DB::transaction(function () use ($request, $id, $refundService) {
+                $order = MealOrder::lockForUpdate()->find($id);
+
+                if (!$order) {
+                    return response()->json(['code' => 404, 'message' => '订单不存在'], 404);
+                }
+
+                $reason = $request->input('reason', '管理员拒绝退款');
+                $refundService->rejectMealRefund($order, $reason);
+                return response()->json(['code' => 200, 'message' => '已拒绝退款申请', 'data' => $order->fresh()]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Admin reject meal refund failed', ['order_id' => $id, 'exception' => $e]);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        }
     }
 }

@@ -111,4 +111,14 @@ class SystemConfig extends Model
     {
         return (bool) self::getValue('notify_new_goods_order', true);
     }
+
+    public static function getCheckinPointsAmount(): int
+    {
+        return (int) self::getValue('checkin_points_amount', 0);
+    }
+
+    public static function getConsumptionPointsRate(): float
+    {
+        return (float) self::getValue('consumption_points_rate', 0);
+    }
 }

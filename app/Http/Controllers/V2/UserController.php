@@ -64,6 +64,7 @@ class UserController extends Controller
             // 构建响应数据
             $userData = [
                 'id' => $user->id,
+                'openid' => $user->openid,
                 'nickname' => $user->nickname,
                 'avatar' => $user->avatar,
                 'gender' => $user->gender,
@@ -112,6 +113,7 @@ class UserController extends Controller
 
         $userData = [
             'id' => $user->id,
+            'openid' => $user->openid,
             'nickname' => $user->nickname,
             'avatar' => $user->avatar,
             'gender' => $user->gender,

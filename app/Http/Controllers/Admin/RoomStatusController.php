@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\RoomStatus;
 use App\Models\Room;
+use App\Models\V2\User;
+use App\Models\V2\SystemConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class RoomStatusController extends Controller
@@ -238,6 +241,9 @@ class RoomStatusController extends Controller
 
             DB::commit();
 
+            // 入住赠送积分
+            $this->grantCheckinPoints($request->customer_id);
+
             return response()->json([
                 'code' => 200,
                 'message' => '入住办理成功',
@@ -255,6 +261,28 @@ class RoomStatusController extends Controller
                 'message' => '入住办理失败：' . $e->getMessage(),
                 'data' => null
             ], 500);
+        }
+    }
+
+    protected function grantCheckinPoints(int $customerId): void
+    {
+        $points = SystemConfig::getCheckinPointsAmount();
+        if ($points <= 0) {
+            return;
+        }
+
+        $users = User::where('customer_id', $customerId)->get();
+        foreach ($users as $user) {
+            try {
+                $user->addPoints($points, 'earn', 'checkin', null, '入住赠送积分');
+            } catch (\Exception $e) {
+                Log::error('Grant checkin points failed', [
+                    'user_id' => $user->id,
+                    'customer_id' => $customerId,
+                    'points' => $points,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 

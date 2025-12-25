@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
+use App\Models\V2\Order;
+use App\Services\V2\RefundService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class OrderAdminController extends Controller
@@ -153,5 +156,48 @@ class OrderAdminController extends Controller
             'code' => 200,
             'message' => '删除成功',
         ]);
+    }
+
+    public function approveRefund($id, RefundService $refundService)
+    {
+        try {
+            return DB::transaction(function () use ($id, $refundService) {
+                $order = Order::lockForUpdate()->find($id);
+
+                if (!$order) {
+                    return response()->json(['code' => 404, 'message' => '订单不存在'], 404);
+                }
+
+                if ($order->refund_status !== Order::REFUND_APPLYING) {
+                    return response()->json(['code' => 400, 'message' => '订单未在退款申请状态'], 400);
+                }
+
+                $refundService->processRefund($order);
+                return response()->json(['code' => 200, 'message' => '退款处理成功', 'data' => $order->fresh()]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Admin approve refund failed', ['order_id' => $id, 'exception' => $e]);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function rejectRefund(Request $request, $id, RefundService $refundService)
+    {
+        try {
+            return DB::transaction(function () use ($request, $id, $refundService) {
+                $order = Order::lockForUpdate()->find($id);
+
+                if (!$order) {
+                    return response()->json(['code' => 404, 'message' => '订单不存在'], 404);
+                }
+
+                $reason = $request->input('reason', '管理员拒绝退款');
+                $refundService->rejectRefund($order, $reason);
+                return response()->json(['code' => 200, 'message' => '已拒绝退款申请', 'data' => $order->fresh()]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Admin reject refund failed', ['order_id' => $id, 'exception' => $e]);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        }
     }
 }
