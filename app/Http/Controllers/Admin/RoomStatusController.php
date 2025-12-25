@@ -296,11 +296,25 @@ class RoomStatusController extends Controller
      */
     public function vacantRooms(Request $request)
     {
+        // 获取所有房型
+        $roomTypes = Room::distinct()->pluck('room_type')->toArray();
+
+        // 如果没有传房型，只返回房型列表
+        if (empty($request->room_type)) {
+            return response()->json([
+                'code' => 200,
+                'message' => 'success',
+                'data' => [
+                    'room_types' => $roomTypes,
+                    'vacant_rooms' => [],
+                ]
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
-            'room_type' => 'required|string',
+            'room_type' => 'string',
             'month' => 'required|date_format:Y-m',
         ], [
-            'room_type.required' => '请选择房型',
             'month.required' => '请选择月份',
             'month.date_format' => '月份格式错误，应为YYYY-MM',
         ]);
