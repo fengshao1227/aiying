@@ -162,6 +162,10 @@ class MealOrderController extends Controller
             return response()->json(['code' => 404, 'message' => '订单不存在'], 404);
         }
 
+        if ($order->payment_status === MealOrder::PAYMENT_STATUS_PAID && $order->refund_status !== MealOrder::REFUND_SUCCESS) {
+            return response()->json(['code' => 400, 'message' => '已支付且未退款的订单不允许删除'], 400);
+        }
+
         $order->delete();
 
         return response()->json([
