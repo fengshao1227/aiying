@@ -276,4 +276,10 @@ Route::prefix('admin/v2')->middleware(['auth:sanctum', 'admin.auth'])->group(fun
         Route::post('/batch', [\App\Http\Controllers\Admin\V2\SystemConfigController::class, 'batchUpdate']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\V2\SystemConfigController::class, 'destroy']);
     });
+
+    // 餐饮配置管理
+    Route::prefix('meal-configs')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\V2\MealConfigController::class, 'index']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\V2\MealConfigController::class, 'update']);
+    });
 });
