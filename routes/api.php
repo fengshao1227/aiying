@@ -120,6 +120,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
     // 房态管理
     Route::prefix('room-status')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\RoomStatusController::class, 'index']);
+        Route::get('/vacant', [\App\Http\Controllers\Admin\RoomStatusController::class, 'vacantRooms']);
         Route::post('/', [\App\Http\Controllers\Admin\RoomStatusController::class, 'store']);
         Route::put('/{id}', [\App\Http\Controllers\Admin\RoomStatusController::class, 'update']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\RoomStatusController::class, 'destroy']);

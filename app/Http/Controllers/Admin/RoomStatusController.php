@@ -289,6 +289,114 @@ class RoomStatusController extends Controller
     }
 
     /**
+     * 空房查询 - 查询指定房型在指定月份的空余房间及前后月入住情况
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function vacantRooms(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'room_type' => 'required|string',
+            'month' => 'required|date_format:Y-m',
+        ], [
+            'room_type.required' => '请选择房型',
+            'month.required' => '请选择月份',
+            'month.date_format' => '月份格式错误，应为YYYY-MM',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 400,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 400);
+        }
+
+        $roomType = $request->room_type;
+        $month = $request->month;
+        $currentMonth = Carbon::createFromFormat('Y-m', $month);
+        $prevMonth = $currentMonth->copy()->subMonth()->format('Y-m');
+        $nextMonth = $currentMonth->copy()->addMonth()->format('Y-m');
+
+        // 获取指定房型的所有房间
+        $rooms = Room::where('room_type', $roomType)
+            ->orderBy('display_order')
+            ->get();
+
+        // 查询这些房间在当月是否有入住记录（status=1）
+        $occupiedRoomIds = RoomStatus::whereIn('room_id', $rooms->pluck('room_id'))
+            ->where('record_month', $month)
+            ->where('status', RoomStatus::STATUS_OCCUPIED)
+            ->pluck('room_id')
+            ->toArray();
+
+        // 筛选出空余房间
+        $vacantRooms = $rooms->filter(function ($room) use ($occupiedRoomIds) {
+            return !in_array($room->room_id, $occupiedRoomIds);
+        });
+
+        // 获取空余房间的三个月入住情况
+        $result = [];
+        foreach ($vacantRooms as $room) {
+            $occupancy = [
+                'prev_month' => $this->getMonthOccupancy($room->room_id, $prevMonth),
+                'current_month' => $this->getMonthOccupancy($room->room_id, $month),
+                'next_month' => $this->getMonthOccupancy($room->room_id, $nextMonth),
+            ];
+
+            $result[] = [
+                'room_id' => $room->room_id,
+                'room_name' => $room->room_name,
+                'floor' => $room->floor,
+                'room_type' => $room->room_type,
+                'color_code' => $room->color_code,
+                'occupancy' => $occupancy,
+            ];
+        }
+
+        // 获取所有可用房型列表
+        $roomTypes = Room::whereNotNull('room_type')
+            ->where('room_type', '!=', '')
+            ->distinct()
+            ->pluck('room_type')
+            ->sort()
+            ->values();
+
+        return response()->json([
+            'code' => 200,
+            'message' => '查询成功',
+            'data' => [
+                'vacant_rooms' => $result,
+                'room_types' => $roomTypes,
+                'query_month' => $month,
+                'prev_month' => $prevMonth,
+                'next_month' => $nextMonth,
+            ]
+        ]);
+    }
+
+    /**
+     * 获取指定房间在指定月份的入住记录
+     */
+    private function getMonthOccupancy(int $roomId, string $month): array
+    {
+        $records = RoomStatus::where('room_id', $roomId)
+            ->where('record_month', $month)
+            ->where('status', RoomStatus::STATUS_OCCUPIED)
+            ->with('customer:customer_id,customer_name')
+            ->get();
+
+        return $records->map(function ($record) {
+            return [
+                'customer_name' => $record->customer?->customer_name ?? '未知客户',
+                'check_in_date' => $record->check_in_date?->format('Y-m-d'),
+                'check_out_date' => $record->check_out_date?->format('Y-m-d'),
+            ];
+        })->toArray();
+    }
+
+    /**
      * 办理退房
      *
      * @param Request $request
