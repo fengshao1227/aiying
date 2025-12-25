@@ -29,7 +29,7 @@ return [
     'cert_path' => storage_path('wechat_pay/apiclient_cert.pem'),
 
     // 支付回调通知URL
-    'notify_url' => env('APP_URL', 'https://aiying.qdhs.cloud') . '/api/payments/wechat/notify',
+    'notify_url' => env('WECHAT_PAY_NOTIFY_URL', env('APP_URL', 'https://aiying.qdhs.cloud') . '/v2/payments/notify'),
 
     // 微信支付API地址
     'api_url' => 'https://api.mch.weixin.qq.com',
