@@ -127,12 +127,23 @@ class UserController extends Controller
 
         // 如果已绑定客户，添加客户信息
         if ($user->isBound() && $user->customer) {
+            $roomName = null;
+            $roomStatus = \App\Models\RoomStatus::with('room')
+                ->where('customer_id', $user->customer->customer_id)
+                ->orderByRaw('status = 1 DESC')
+                ->orderBy('check_in_date', 'desc')
+                ->first();
+            if ($roomStatus && $roomStatus->room) {
+                $roomName = $roomStatus->room->room_name;
+            }
+
             $userData['customer'] = [
                 'id' => $user->customer->customer_id,
                 'name' => $user->customer->customer_name,
                 'phone' => $user->customer->phone,
                 'packageName' => $user->customer->package_name,
                 'babyName' => $user->customer->baby_name,
+                'roomName' => $roomName,
                 'checkInDate' => $user->customer->check_in_date?->toISOString(),
                 'checkOutDate' => $user->customer->check_out_date?->toISOString(),
             ];
@@ -209,6 +220,16 @@ class UserController extends Controller
             // 重新加载用户数据
             $user->load('customer');
 
+            $roomName = null;
+            $roomStatus = \App\Models\RoomStatus::with('room')
+                ->where('customer_id', $customer->customer_id)
+                ->orderByRaw('status = 1 DESC')
+                ->orderBy('check_in_date', 'desc')
+                ->first();
+            if ($roomStatus && $roomStatus->room) {
+                $roomName = $roomStatus->room->room_name;
+            }
+
             $userData = [
                 'id' => $user->id,
                 'openid' => $user->openid,
@@ -226,6 +247,7 @@ class UserController extends Controller
                     'phone' => $customer->phone,
                     'packageName' => $customer->package_name ?? null,
                     'babyName' => $customer->baby_name ?? null,
+                    'roomName' => $roomName,
                     'checkInDate' => $customer->check_in_date?->toISOString(),
                     'checkOutDate' => $customer->check_out_date?->toISOString(),
                 ],
