@@ -134,6 +134,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
 // ============================================================
 
 Route::prefix('admin/v2')->middleware(['auth:sanctum', 'admin.auth'])->group(function () {
+    // Dashboard 统计
+    Route::get('/dashboard/overview', [\App\Http\Controllers\Admin\V2\DashboardController::class, 'overview']);
+
     // 用户管理
     Route::prefix('users')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\V2\UserController::class, 'index']);
