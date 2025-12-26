@@ -66,32 +66,47 @@ class WalletController extends Controller
             ], 404);
         }
 
+        $transactions = WalletTransaction::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
         return response()->json([
             'code' => 0,
             'message' => 'success',
-            'data' => $wallet,
+            'data' => [
+                'wallet' => $wallet,
+                'transactions' => $transactions,
+            ],
         ]);
     }
 
     public function adjust(Request $request, int $userId): JsonResponse
     {
         $request->validate([
-            'amount' => 'required|numeric',
-            'reason' => 'required|string|max:255',
+            'type' => 'required|in:increase,decrease',
+            'amount' => 'required|numeric|min:0.01',
+            'remark' => 'required|string|max:255',
         ], [
+            'type.required' => '请选择调整类型',
             'amount.required' => '请输入调整金额',
-            'reason.required' => '请输入调整原因',
+            'remark.required' => '请输入调整原因',
         ]);
 
         $wallet = $this->walletService->getOrCreateWallet($userId);
         $admin = $request->user();
 
+        $amount = (float) $request->amount;
+        if ($request->type === 'decrease') {
+            $amount = -$amount;
+        }
+
         try {
             $transaction = $this->walletService->adjust(
                 $wallet,
-                (float) $request->amount,
+                $amount,
                 $admin->id,
-                $request->reason
+                $request->remark
             );
 
             return response()->json([
@@ -112,10 +127,6 @@ class WalletController extends Controller
 
     public function freeze(Request $request, int $userId): JsonResponse
     {
-        $request->validate([
-            'reason' => 'required|string|max:255',
-        ]);
-
         $wallet = Wallet::where('user_id', $userId)->first();
 
         if (!$wallet) {
@@ -126,9 +137,10 @@ class WalletController extends Controller
         }
 
         $admin = $request->user();
+        $reason = $request->input('reason', '管理员操作冻结');
 
         try {
-            $this->walletService->freeze($wallet, $admin->id, $request->reason);
+            $this->walletService->freeze($wallet, $admin->id, $reason);
 
             return response()->json([
                 'code' => 0,
@@ -144,10 +156,6 @@ class WalletController extends Controller
 
     public function unfreeze(Request $request, int $userId): JsonResponse
     {
-        $request->validate([
-            'reason' => 'required|string|max:255',
-        ]);
-
         $wallet = Wallet::where('user_id', $userId)->first();
 
         if (!$wallet) {
@@ -158,9 +166,10 @@ class WalletController extends Controller
         }
 
         $admin = $request->user();
+        $reason = $request->input('reason', '管理员操作解冻');
 
         try {
-            $this->walletService->unfreeze($wallet, $admin->id, $request->reason);
+            $this->walletService->unfreeze($wallet, $admin->id, $reason);
 
             return response()->json([
                 'code' => 0,
@@ -172,6 +181,35 @@ class WalletController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    public function resetPassword(Request $request, int $userId): JsonResponse
+    {
+        $wallet = Wallet::where('user_id', $userId)->first();
+
+        if (!$wallet) {
+            return response()->json([
+                'code' => 404,
+                'message' => '钱包不存在',
+            ], 404);
+        }
+
+        if (!$wallet->payment_password) {
+            return response()->json([
+                'code' => 400,
+                'message' => '用户未设置支付密码',
+            ], 400);
+        }
+
+        $wallet->payment_password = null;
+        $wallet->password_fail_count = 0;
+        $wallet->password_locked_until = null;
+        $wallet->save();
+
+        return response()->json([
+            'code' => 0,
+            'message' => '支付密码已重置',
+        ]);
     }
 
     public function transactions(Request $request, int $userId): JsonResponse

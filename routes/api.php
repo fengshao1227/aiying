@@ -207,4 +207,19 @@ Route::prefix('admin/v2')->middleware(['auth:sanctum', 'admin.auth'])->group(fun
         Route::get('/', [\App\Http\Controllers\Admin\V2\MealConfigController::class, 'index']);
         Route::put('/{id}', [\App\Http\Controllers\Admin\V2\MealConfigController::class, 'update']);
     });
+
+    // 钱包管理
+    Route::prefix('wallets')->group(function () {
+        Route::get('/', [\App\Http\Controllers\V2\Admin\WalletController::class, 'index']);
+        Route::get('/{userId}', [\App\Http\Controllers\V2\Admin\WalletController::class, 'show']);
+        Route::post('/{userId}/adjust', [\App\Http\Controllers\V2\Admin\WalletController::class, 'adjust']);
+        Route::post('/{userId}/freeze', [\App\Http\Controllers\V2\Admin\WalletController::class, 'freeze']);
+        Route::post('/{userId}/unfreeze', [\App\Http\Controllers\V2\Admin\WalletController::class, 'unfreeze']);
+        Route::post('/{userId}/reset-password', [\App\Http\Controllers\V2\Admin\WalletController::class, 'resetPassword']);
+        Route::get('/{userId}/transactions', [\App\Http\Controllers\V2\Admin\WalletController::class, 'transactions']);
+    });
+
+    // 钱包配置
+    Route::get('/wallet-configs', [\App\Http\Controllers\V2\Admin\WalletController::class, 'configs']);
+    Route::put('/wallet-configs', [\App\Http\Controllers\V2\Admin\WalletController::class, 'updateConfig']);
 });

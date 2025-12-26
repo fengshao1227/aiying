@@ -115,15 +115,3 @@ Route::prefix('wallet')->middleware('v2.user.auth')->group(function () {
 
 // 钱包充值回调（无需认证）
 Route::post('/wallet/notify', [PaymentController::class, 'walletNotify']);
-
-// 管理后台 - 钱包管理
-Route::prefix('admin/wallets')->middleware('admin.auth')->group(function () {
-    Route::get('/', [AdminWalletController::class, 'index']);
-    Route::get('/configs', [AdminWalletController::class, 'configs']);
-    Route::put('/configs', [AdminWalletController::class, 'updateConfig']);
-    Route::get('/{userId}', [AdminWalletController::class, 'show']);
-    Route::post('/{userId}/adjust', [AdminWalletController::class, 'adjust']);
-    Route::post('/{userId}/freeze', [AdminWalletController::class, 'freeze']);
-    Route::post('/{userId}/unfreeze', [AdminWalletController::class, 'unfreeze']);
-    Route::get('/{userId}/transactions', [AdminWalletController::class, 'transactions']);
-});
