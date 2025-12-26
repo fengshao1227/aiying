@@ -10,12 +10,28 @@ use App\Models\V2\Product;
 use App\Models\Room;
 use App\Models\RoomStatus;
 use App\Models\Customer;
+use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function overview()
+    {
+        $data = CacheService::remember(
+            CacheService::dashboardKey(),
+            CacheService::TTL_SHORT,
+            fn() => $this->buildOverviewData()
+        );
+
+        return response()->json([
+            'code' => 200,
+            'message' => '获取成功',
+            'data' => $data,
+        ]);
+    }
+
+    private function buildOverviewData(): array
     {
         $today = Carbon::today();
         $weekAgo = Carbon::today()->subDays(6);
@@ -124,45 +140,41 @@ class DashboardController extends Controller
         $lowStock = Product::where('status', 1)->where('stock', '<', 10)->count();
         $refundApplying = Order::where('refund_status', 1)->count();
 
-        return response()->json([
-            'code' => 200,
-            'message' => '获取成功',
-            'data' => [
-                'today' => [
-                    'orders' => $todayOrders + $todayMealOrders,
-                    'revenue' => (float) $todayRevenue,
-                    'new_users' => $todayNewUsers,
-                ],
-                'total' => [
-                    'users' => $totalUsers,
-                    'products' => $totalProducts,
-                    'orders' => $totalOrders,
-                ],
-                'occupancy' => [
-                    'total_rooms' => $totalRooms,
-                    'occupied' => $occupiedRooms,
-                    'rate' => $occupancyRate,
-                ],
-                'customers' => [
-                    'total' => $totalCustomers,
-                    'current' => $currentCustomers,
-                    'month_new' => $monthNewCustomers,
-                    'packages' => $packageDistribution,
-                ],
-                'trends' => [
-                    'dates' => $dates,
-                    'orders' => $orderTrend,
-                    'revenue' => $revenueTrend,
-                ],
-                'order_status' => $orderStatus,
-                'top_products' => $topProducts,
-                'alerts' => [
-                    'pending_shipment' => $pendingShipment,
-                    'pending_meals' => $pendingMeals,
-                    'low_stock' => $lowStock,
-                    'refund_applying' => $refundApplying,
-                ],
+        return [
+            'today' => [
+                'orders' => $todayOrders + $todayMealOrders,
+                'revenue' => (float) $todayRevenue,
+                'new_users' => $todayNewUsers,
             ],
-        ]);
+            'total' => [
+                'users' => $totalUsers,
+                'products' => $totalProducts,
+                'orders' => $totalOrders,
+            ],
+            'occupancy' => [
+                'total_rooms' => $totalRooms,
+                'occupied' => $occupiedRooms,
+                'rate' => $occupancyRate,
+            ],
+            'customers' => [
+                'total' => $totalCustomers,
+                'current' => $currentCustomers,
+                'month_new' => $monthNewCustomers,
+                'packages' => $packageDistribution,
+            ],
+            'trends' => [
+                'dates' => $dates,
+                'orders' => $orderTrend,
+                'revenue' => $revenueTrend,
+            ],
+            'order_status' => $orderStatus,
+            'top_products' => $topProducts,
+            'alerts' => [
+                'pending_shipment' => $pendingShipment,
+                'pending_meals' => $pendingMeals,
+                'low_stock' => $lowStock,
+                'refund_applying' => $refundApplying,
+            ],
+        ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\V2;
 
 use App\Http\Controllers\Controller;
 use App\Models\V2\SystemConfig;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -12,21 +13,31 @@ class SystemConfigController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SystemConfig::query();
+        $group = $request->input('group', 'all');
+        $keyword = $request->input('keyword');
 
-        if ($request->filled('group')) {
-            $query->byGroup($request->group);
-        }
-
-        if ($request->filled('keyword')) {
-            $keyword = addcslashes($request->keyword, '%_');
+        // 有关键词搜索时不使用缓存
+        if ($keyword) {
+            $query = SystemConfig::query();
+            $keyword = addcslashes($keyword, '%_');
             $query->where(function ($q) use ($keyword) {
                 $q->where('config_key', 'like', "%{$keyword}%")
                     ->orWhere('description', 'like', "%{$keyword}%");
             });
+            if ($group !== 'all') {
+                $query->byGroup($group);
+            }
+            $configs = $query->orderBy('group')->orderBy('config_key')->get();
+        } else {
+            $cacheKey = CacheService::configKey($group);
+            $configs = CacheService::remember($cacheKey, CacheService::TTL_LONG, function () use ($group) {
+                $query = SystemConfig::query();
+                if ($group !== 'all') {
+                    $query->byGroup($group);
+                }
+                return $query->orderBy('group')->orderBy('config_key')->get();
+            });
         }
-
-        $configs = $query->orderBy('group')->orderBy('config_key')->get();
 
         return response()->json([
             'code' => 200,
@@ -68,6 +79,8 @@ class SystemConfigController extends Controller
             'config_key', 'config_value', 'config_type', 'group', 'description'
         ]));
 
+        CacheService::clearConfig();
+
         return response()->json([
             'code' => 200,
             'message' => '创建成功',
@@ -98,6 +111,8 @@ class SystemConfigController extends Controller
             'config_value', 'config_type', 'group', 'description'
         ]));
 
+        CacheService::clearConfig();
+
         return response()->json([
             'code' => 200,
             'message' => '更新成功',
@@ -114,6 +129,8 @@ class SystemConfigController extends Controller
         }
 
         $config->delete();
+
+        CacheService::clearConfig();
 
         return response()->json([
             'code' => 200,
@@ -139,6 +156,8 @@ class SystemConfigController extends Controller
                     ->update(['config_value' => $item['config_value']]);
             }
         });
+
+        CacheService::clearConfig();
 
         return response()->json([
             'code' => 200,

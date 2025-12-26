@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\CachedPersonalAccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -93,8 +94,9 @@ class AdminAuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // 删除当前token
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+        CachedPersonalAccessToken::clearTokenCache($token->id);
+        $token->delete();
 
         return response()->json([
             'code' => 200,
