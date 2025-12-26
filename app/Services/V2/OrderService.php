@@ -24,7 +24,7 @@ class OrderService
         return DB::transaction(function () use ($user, $params) {
             $user = User::lockForUpdate()->find($user->id);
 
-            $totalAmount = 0;
+            $totalAmount = '0';
             $orderItems = [];
 
             foreach ($params['items'] as $item) {
@@ -77,7 +77,7 @@ class OrderService
                 throw new \Exception('购物车为空');
             }
 
-            $totalAmount = 0;
+            $totalAmount = '0';
             $orderItems = [];
 
             foreach ($cartItems as $cartItem) {
