@@ -7,6 +7,8 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 class CachedPersonalAccessToken extends SanctumPersonalAccessToken
 {
+    protected $table = 'personal_access_tokens';
+
     const CACHE_PREFIX = 'sanctum:token:';
     const CACHE_TTL = 2592000; // 30天
 
