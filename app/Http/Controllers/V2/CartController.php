@@ -31,42 +31,34 @@ class CartController extends Controller
 
             return [
                 'id' => $cart->id,
-                'productId' => $cart->product_id,
+                'product_id' => $cart->product_id,
+                'quantity' => $cart->quantity,
+                'selected' => $cart->selected,
+                'isValid' => $isValid,
                 'product' => $cart->product ? [
                     'id' => $cart->product->id,
                     'name' => $cart->product->name,
-                    'coverImage' => $cart->product->cover_image,
+                    'cover_image' => $cart->product->cover_image,
                     'price' => $cart->product->price,
-                    'pointsPrice' => $cart->product->points_price,
                     'stock' => $cart->product->stock,
-                    'unit' => $cart->product->unit,
-                    'deliveryType' => $cart->product->delivery_type,
                     'status' => $cart->product->status,
                 ] : null,
-                'quantity' => $cart->quantity,
-                'selected' => $cart->selected,
                 'subtotal' => $cart->getSubtotal(),
-                'pointsSubtotal' => $cart->getPointsSubtotal(),
-                'isValid' => $isValid,
-                'invalidReason' => !$isValid ? $this->getInvalidReason($cart) : null,
             ];
         });
 
         // 计算总计（仅有效且选中的商品）
         $selectedItems = $items->filter(fn($item) => $item['selected'] && $item['isValid']);
         $totalAmount = $selectedItems->sum('subtotal');
-        $totalPoints = $selectedItems->sum('pointsSubtotal');
 
         return response()->json([
             'code' => 0,
             'message' => '获取成功',
             'data' => [
                 'items' => $items->values(),
-                'summary' => [
-                    'totalAmount' => number_format($totalAmount, 2, '.', ''),
-                    'totalPoints' => $totalPoints,
-                    'selectedCount' => $selectedItems->count(),
-                ],
+                'totalCount' => $items->count(),
+                'selectedCount' => $selectedItems->count(),
+                'totalAmount' => number_format($totalAmount, 2, '.', ''),
             ],
         ]);
     }

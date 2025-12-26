@@ -55,20 +55,19 @@ class ProductController extends Controller
         $products->getCollection()->transform(function ($product) {
             return [
                 'id' => $product->id,
-                'categoryId' => $product->category_id,
-                'categoryName' => $product->category->name ?? null,
+                'category_id' => $product->category_id,
                 'name' => $product->name,
-                'coverImage' => $product->cover_image,
-                'deliveryType' => $product->delivery_type,
-                'originalPrice' => $product->original_price,
+                'cover_image' => $product->cover_image,
                 'price' => $product->price,
-                'pointsPrice' => $product->points_price,
+                'original_price' => $product->original_price,
+                'points_price' => $product->points_price,
                 'stock' => $product->stock,
-                'sales' => $product->sales,
                 'unit' => $product->unit,
-                'summary' => $product->summary,
-                'supportsPoints' => $product->supportsPoints(),
-                'supportsCash' => $product->supportsCash(),
+                'delivery_type' => $product->delivery_type,
+                'category' => [
+                    'id' => $product->category->id ?? null,
+                    'name' => $product->category->name ?? null,
+                ],
             ];
         });
 
@@ -112,22 +111,23 @@ class ProductController extends Controller
 
         $data = [
             'id' => $product->id,
-            'categoryId' => $product->category_id,
-            'categoryName' => $product->category->name ?? null,
+            'category_id' => $product->category_id,
             'name' => $product->name,
-            'coverImage' => $product->cover_image,
+            'cover_image' => $product->cover_image,
             'images' => $product->images ?? [],
-            'deliveryType' => $product->delivery_type,
-            'originalPrice' => $product->original_price,
+            'delivery_type' => $product->delivery_type,
+            'original_price' => $product->original_price,
             'price' => $product->price,
-            'pointsPrice' => $product->points_price,
+            'points_price' => $product->points_price,
             'stock' => $product->stock,
-            'sales' => $product->sales,
             'unit' => $product->unit,
             'summary' => $product->summary,
             'description' => $product->description,
-            'supportsPoints' => $product->supportsPoints(),
-            'supportsCash' => $product->supportsCash(),
+            'status' => $product->status,
+            'category' => [
+                'id' => $product->category->id ?? null,
+                'name' => $product->category->name ?? null,
+            ],
         ];
 
         return response()->json([

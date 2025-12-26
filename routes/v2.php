@@ -105,12 +105,12 @@ Route::prefix('config')->group(function () {
 
 // 钱包模块路由（需要认证）
 Route::prefix('wallet')->middleware('v2.user.auth')->group(function () {
-    Route::get('/info', [WalletController::class, 'info']);
-    Route::post('/password/set', [WalletController::class, 'setPassword']);
-    Route::post('/password/change', [WalletController::class, 'changePassword']);
-    Route::post('/password/verify', [WalletController::class, 'verifyPassword']);
-    Route::post('/recharge', [WalletController::class, 'recharge']);
+    Route::get('/', [WalletController::class, 'info']);
     Route::get('/transactions', [WalletController::class, 'transactions']);
+    Route::post('/recharge', [WalletController::class, 'recharge']);
+    Route::post('/password', [WalletController::class, 'setPassword']);
+    Route::put('/password', [WalletController::class, 'changePassword']);
+    Route::post('/password/verify', [WalletController::class, 'verifyPassword']);
 });
 
 // 钱包充值回调（无需认证）

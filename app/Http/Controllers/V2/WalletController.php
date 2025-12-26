@@ -30,15 +30,23 @@ class WalletController extends Controller
         $user = $request->user;
         $wallet = $this->walletService->getOrCreateWallet($user->id);
 
+        // 计算累计充值和累计消费
+        $stats = \App\Models\V2\WalletTransaction::where('user_id', $user->id)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type = 'recharge' AND amount > 0 THEN amount ELSE 0 END), 0) as total_recharged,
+                COALESCE(SUM(CASE WHEN type = 'consume' AND amount < 0 THEN ABS(amount) ELSE 0 END), 0) as total_consumed
+            ")
+            ->first();
+
         return response()->json([
             'code' => 0,
             'message' => 'success',
             'data' => [
                 'balance' => $wallet->balance,
-                'status' => $wallet->status,
-                'is_frozen' => $wallet->isFrozen(),
+                'status' => $wallet->isFrozen() ? 'frozen' : 'active',
                 'has_password' => $wallet->hasPassword(),
-                'is_password_locked' => $wallet->isPasswordLocked(),
+                'total_recharged' => number_format($stats->total_recharged ?? 0, 2, '.', ''),
+                'total_consumed' => number_format($stats->total_consumed ?? 0, 2, '.', ''),
             ],
         ]);
     }
@@ -170,8 +178,8 @@ class WalletController extends Controller
                 'amount' => abs($item->amount),
                 'direction' => $item->direction,
                 'balance_after' => $item->balance_after,
-                'reason' => $item->reason,
-                'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+                'remark' => $item->reason,
+                'created_at' => $item->created_at->toISOString(),
             ];
         });
 
