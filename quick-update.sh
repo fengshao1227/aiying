@@ -17,6 +17,7 @@ SERVER_PATH="/www/wwwroot/aiying-backend"
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${CYAN}⚡ 快速部署模式${NC}\n"
@@ -33,8 +34,16 @@ git push origin "$BRANCH"
 
 # 3. 服务器更新
 echo -e "${CYAN}▶ 服务器更新...${NC}"
-sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" \
-    "cd $SERVER_PATH && git pull && chown -R www:www $SERVER_PATH"
+sshpass -p "$SERVER_PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" "
+    cd $SERVER_PATH && \
+    git pull && \
+    chown -R www:www $SERVER_PATH && \
+    git checkout -- '*.gitignore' 2>/dev/null; \
+    php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    echo '缓存已清理'
+"
 
 if [ $? -eq 0 ]; then
     echo -e "\n${GREEN}✓ 快速部署完成！${NC}\n"

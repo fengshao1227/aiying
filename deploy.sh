@@ -197,18 +197,13 @@ deploy_to_server() {
         php artisan view:clear
         echo -e "${GREEN}[服务器] ✓ 缓存清理成功${NC}"
 
-        # 优化缓存
-        echo -e "${CYAN}[服务器] 优化缓存...${NC}"
-        php artisan config:cache
-        php artisan route:cache
-        echo -e "${GREEN}[服务器] ✓ 缓存优化成功${NC}"
-
         # 修正文件权限
         echo -e "${CYAN}[服务器] 修正文件权限...${NC}"
         chown -R www:www /www/wwwroot/aiying-backend
         chmod -R 755 /www/wwwroot/aiying-backend
         chmod -R 775 /www/wwwroot/aiying-backend/storage
         chmod -R 775 /www/wwwroot/aiying-backend/bootstrap/cache
+        git checkout -- '*.gitignore' 2>/dev/null
         echo -e "${GREEN}[服务器] ✓ 权限设置成功${NC}"
 
         # 获取最新提交信息
