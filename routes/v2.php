@@ -9,6 +9,8 @@ use App\Http\Controllers\V2\PointsController;
 use App\Http\Controllers\V2\PaymentController;
 use App\Http\Controllers\V2\AddressController;
 use App\Http\Controllers\V2\ConfigController;
+use App\Http\Controllers\V2\WalletController;
+use App\Http\Controllers\V2\Admin\WalletController as AdminWalletController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -99,4 +101,29 @@ Route::prefix('config')->group(function () {
     Route::get('/', [ConfigController::class, 'index']);
     Route::get('/points', [ConfigController::class, 'getPointsConfig']);
     Route::get('/{key}', [ConfigController::class, 'show']);
+});
+
+// 钱包模块路由（需要认证）
+Route::prefix('wallet')->middleware('v2.user.auth')->group(function () {
+    Route::get('/info', [WalletController::class, 'info']);
+    Route::post('/password/set', [WalletController::class, 'setPassword']);
+    Route::post('/password/change', [WalletController::class, 'changePassword']);
+    Route::post('/password/verify', [WalletController::class, 'verifyPassword']);
+    Route::post('/recharge', [WalletController::class, 'recharge']);
+    Route::get('/transactions', [WalletController::class, 'transactions']);
+});
+
+// 钱包充值回调（无需认证）
+Route::post('/wallet/notify', [PaymentController::class, 'walletNotify']);
+
+// 管理后台 - 钱包管理
+Route::prefix('admin/wallets')->middleware('admin.auth')->group(function () {
+    Route::get('/', [AdminWalletController::class, 'index']);
+    Route::get('/configs', [AdminWalletController::class, 'configs']);
+    Route::put('/configs', [AdminWalletController::class, 'updateConfig']);
+    Route::get('/{userId}', [AdminWalletController::class, 'show']);
+    Route::post('/{userId}/adjust', [AdminWalletController::class, 'adjust']);
+    Route::post('/{userId}/freeze', [AdminWalletController::class, 'freeze']);
+    Route::post('/{userId}/unfreeze', [AdminWalletController::class, 'unfreeze']);
+    Route::get('/{userId}/transactions', [AdminWalletController::class, 'transactions']);
 });

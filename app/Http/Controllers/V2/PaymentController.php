@@ -9,6 +9,7 @@ use App\Models\V2\User;
 use App\Models\V2\SystemConfig;
 use App\Services\V2\WechatPayService;
 use App\Services\V2\WeworkNotifyService;
+use App\Services\WalletPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,11 +19,16 @@ class PaymentController extends Controller
 {
     protected WechatPayService $wechatPayService;
     protected WeworkNotifyService $notifyService;
+    protected WalletPaymentService $walletPaymentService;
 
-    public function __construct(WechatPayService $wechatPayService, WeworkNotifyService $notifyService)
-    {
+    public function __construct(
+        WechatPayService $wechatPayService,
+        WeworkNotifyService $notifyService,
+        WalletPaymentService $walletPaymentService
+    ) {
         $this->wechatPayService = $wechatPayService;
         $this->notifyService = $notifyService;
+        $this->walletPaymentService = $walletPaymentService;
     }
 
     /**
@@ -296,6 +302,36 @@ class PaymentController extends Controller
                 'source_id' => $sourceId,
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * 钱包充值回调
+     */
+    public function walletNotify(Request $request): JsonResponse
+    {
+        try {
+            $headers = $request->headers->all();
+            $body = $request->getContent();
+
+            $data = $this->wechatPayService->verifyAndDecryptNotify($headers, $body);
+
+            if ($data['trade_state'] !== 'SUCCESS') {
+                return $this->notifySuccess();
+            }
+
+            $orderNo = $data['out_trade_no'];
+            $transactionId = $data['transaction_id'];
+
+            $this->walletPaymentService->handleRechargeNotify($orderNo, $transactionId);
+
+            return $this->notifySuccess();
+        } catch (\Exception $e) {
+            Log::error('Wallet notify error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'code' => 'FAIL',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }
