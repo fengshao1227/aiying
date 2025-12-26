@@ -126,7 +126,7 @@ class SystemConfigController extends Controller
         $validator = Validator::make($request->all(), [
             'configs' => 'required|array',
             'configs.*.config_key' => 'required|string',
-            'configs.*.config_value' => 'required|string',
+            'configs.*.config_value' => 'present|string',
         ]);
 
         if ($validator->fails()) {
