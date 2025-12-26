@@ -33,7 +33,7 @@ class WalletController extends Controller
         // 计算累计充值和累计消费
         $stats = \App\Models\V2\WalletTransaction::where('user_id', $user->id)
             ->selectRaw("
-                COALESCE(SUM(CASE WHEN type = 'recharge' AND amount > 0 THEN amount ELSE 0 END), 0) as total_recharged,
+                COALESCE(SUM(CASE WHEN type = 'topup' AND amount > 0 THEN amount ELSE 0 END), 0) as total_recharged,
                 COALESCE(SUM(CASE WHEN type = 'consume' AND amount < 0 THEN ABS(amount) ELSE 0 END), 0) as total_consumed
             ")
             ->first();

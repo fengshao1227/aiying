@@ -1319,17 +1319,16 @@ GET /v2/wallet/transactions
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| type | string | 否 | 类型筛选(recharge/consume/refund/adjust) |
+| type | string | 否 | 类型筛选(topup/consume/adjust) |
 | page | int | 否 | 页码(默认1) |
-| per_page | int | 否 | 每页数量(默认20，最大50) |
+| per_page | int | 否 | 每页数量(默认20) |
 
 **交易类型说明：**
 
 | type | 说明 |
 |------|------|
-| recharge | 充值 |
+| topup | 充值 |
 | consume | 消费 |
-| refund | 退款 |
 | adjust | 后台调整 |
 
 **响应字段：**
@@ -1355,7 +1354,7 @@ GET /v2/wallet/transactions
     "list": [
       {
         "id": 1,
-        "type": "recharge",
+        "type": "topup",
         "type_text": "充值",
         "amount": "100.00",
         "direction": "in",
