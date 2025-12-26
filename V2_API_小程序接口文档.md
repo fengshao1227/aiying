@@ -687,8 +687,11 @@ POST /v2/orders/mall
 | freight_amount | decimal | 否 | 运费(默认0) |
 | points_used | int | 否 | 使用积分抵扣(默认0) |
 | remarks | string | 否 | 订单备注 |
+| items | array | 否 | 商品列表(直接购买时传入，不传则从购物车结算) |
+| items[].product_id | int | 条件必填 | 商品ID(传items时必填) |
+| items[].quantity | int | 条件必填 | 购买数量(传items时必填) |
 
-**请求示例（快递配送）：**
+**请求示例（从购物车结算）：**
 
 ```json
 {
@@ -699,6 +702,21 @@ POST /v2/orders/mall
   "freight_amount": 10,
   "points_used": 100,
   "remarks": "请尽快发货"
+}
+```
+
+**请求示例（直接购买）：**
+
+```json
+{
+  "delivery_type": "express",
+  "receiver_name": "张三",
+  "receiver_phone": "13800138000",
+  "receiver_address": "山东省青岛市市南区香港中路100号",
+  "points_used": 0,
+  "items": [
+    { "product_id": 10, "quantity": 2 }
+  ]
 }
 ```
 

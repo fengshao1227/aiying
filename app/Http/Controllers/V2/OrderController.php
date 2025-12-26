@@ -40,9 +40,12 @@ class OrderController extends Controller
                 'freight_amount' => 'nullable|numeric|min:0',
                 'points_used' => 'nullable|integer|min:0',
                 'remarks' => 'nullable|string',
+                'items' => 'nullable|array|min:1',
+                'items.*.product_id' => 'required_with:items|integer',
+                'items.*.quantity' => 'required_with:items|integer|min:1',
             ]);
 
-            $order = $this->orderService->createFromCart($user, $validated);
+            $order = $this->orderService->createOrder($user, $validated);
 
             return response()->json([
                 'code' => 0,
