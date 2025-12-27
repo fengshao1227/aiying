@@ -13,7 +13,8 @@ class MealConfigController extends Controller
     {
         $validated = $request->validate([
             'meal_type' => 'sometimes|in:breakfast,lunch,dinner',
-            'date' => 'sometimes|date_format:Y-m-d',
+            'start_date' => 'sometimes|date_format:Y-m-d',
+            'end_date' => 'sometimes|date_format:Y-m-d|after_or_equal:start_date',
         ]);
 
         $query = MealConfig::enabled();
@@ -22,19 +23,38 @@ class MealConfigController extends Controller
             $query->byType($validated['meal_type']);
         }
 
-        $configs = $query->get();
+        $meals = $query->get();
 
-        if (isset($validated['date'])) {
-            $date = Carbon::createFromFormat('Y-m-d', $validated['date'])->startOfDay();
-            $configs->each(function ($config) use ($date) {
-                $config->is_available = $config->isAvailableForDate($date);
-            });
+        $responseData = ['meals' => $meals];
+
+        if (isset($validated['start_date']) && isset($validated['end_date'])) {
+            $startDate = Carbon::createFromFormat('Y-m-d', $validated['start_date'])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $validated['end_date'])->startOfDay();
+
+            $unavailableDates = [];
+            $currentDate = $startDate->copy();
+
+            while ($currentDate->lte($endDate)) {
+                $dateAvailable = false;
+                foreach ($meals as $meal) {
+                    if ($meal->isAvailableForDate($currentDate)) {
+                        $dateAvailable = true;
+                        break;
+                    }
+                }
+                if (!$dateAvailable) {
+                    $unavailableDates[] = $currentDate->format('Y-m-d');
+                }
+                $currentDate->addDay();
+            }
+
+            $responseData['unavailable_dates'] = $unavailableDates;
         }
 
         return response()->json([
             'code' => 0,
             'message' => '获取成功',
-            'data' => $configs,
+            'data' => $responseData,
         ]);
     }
 }

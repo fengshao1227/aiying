@@ -16,6 +16,7 @@ class MealConfig extends Model
         'order_end_time',
         'advance_days',
         'description',
+        'cover_image',
         'status',
     ];
 

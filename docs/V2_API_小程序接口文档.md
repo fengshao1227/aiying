@@ -1111,22 +1111,25 @@ GET /v2/meal/configs
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | meal_type | string | 否 | 餐次筛选(breakfast/lunch/dinner) |
-| date | string | 否 | 日期(格式: Y-m-d)，传入后返回is_available字段 |
+| start_date | string | 否 | 日历查询起始日期(格式: Y-m-d) |
+| end_date | string | 否 | 日历查询结束日期(格式: Y-m-d)，需与start_date一起使用 |
 
 **响应字段：**
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | int | 配置ID |
-| meal_type | string | 餐次类型 |
-| name | string | 餐次名称 |
-| price | decimal | 价格 |
-| order_start_time | time | 订餐开始时间(HH:mm:ss) |
-| order_end_time | time | 订餐截止时间(HH:mm:ss) |
-| advance_days | int | 需提前天数(0=当天可订) |
-| description | string | 描述 |
-| status | int | 状态(1=启用) |
-| is_available | bool | 是否可订(传date参数时返回) |
+| meals | array | 餐次配置列表 |
+| meals[].id | int | 配置ID |
+| meals[].meal_type | string | 餐次类型 |
+| meals[].name | string | 餐次名称 |
+| meals[].price | decimal | 价格 |
+| meals[].cover_image | string | 封面图片URL |
+| meals[].order_start_time | time | 订餐开始时间(HH:mm:ss) |
+| meals[].order_end_time | time | 订餐截止时间(HH:mm:ss) |
+| meals[].advance_days | int | 需提前天数(0=当天可订) |
+| meals[].description | string | 描述 |
+| meals[].status | int | 状态(1=启用) |
+| unavailable_dates | array | 不可预订日期列表(传入start_date和end_date时返回) |
 
 **响应示例：**
 
@@ -1134,32 +1137,38 @@ GET /v2/meal/configs
 {
   "code": 0,
   "message": "获取成功",
-  "data": [
-    {
-      "id": 1,
-      "meal_type": "breakfast",
-      "name": "早餐",
-      "price": "30.00",
-      "order_start_time": "06:00:00",
-      "order_end_time": "08:00:00",
-      "advance_days": 1,
-      "description": "需提前一天预订",
-      "status": 1,
-      "is_available": true
-    },
-    {
-      "id": 2,
-      "meal_type": "lunch",
-      "name": "午餐",
-      "price": "50.00",
-      "order_start_time": "09:00:00",
-      "order_end_time": "11:00:00",
-      "advance_days": 0,
-      "description": "当天可订",
-      "status": 1,
-      "is_available": false
-    }
-  ]
+  "data": {
+    "meals": [
+      {
+        "id": 1,
+        "meal_type": "breakfast",
+        "name": "营养早餐",
+        "price": "10.00",
+        "cover_image": "https://example.com/breakfast.jpg",
+        "order_start_time": "06:00:00",
+        "order_end_time": "08:00:00",
+        "advance_days": 1,
+        "description": "每日固定营养搭配",
+        "status": 1
+      },
+      {
+        "id": 2,
+        "meal_type": "lunch",
+        "name": "营养午餐",
+        "price": "10.00",
+        "cover_image": "https://example.com/lunch.jpg",
+        "order_start_time": "09:00:00",
+        "order_end_time": "11:00:00",
+        "advance_days": 0,
+        "description": "当天可订",
+        "status": 1
+      }
+    ],
+    "unavailable_dates": [
+      "2025-12-30",
+      "2026-01-01"
+    ]
+  }
 }
 ```
 

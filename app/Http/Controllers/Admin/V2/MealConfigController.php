@@ -26,6 +26,7 @@ class MealConfigController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:50',
             'price' => 'sometimes|numeric|min:0',
+            'cover_image' => 'nullable|string|max:500',
             'order_start_time' => 'sometimes|date_format:H:i:s',
             'order_end_time' => 'sometimes|date_format:H:i:s',
             'advance_days' => 'sometimes|integer|min:0',
