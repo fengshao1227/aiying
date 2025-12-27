@@ -40,16 +40,19 @@ class CartController extends Controller
                     'name' => $cart->product->name,
                     'cover_image' => $cart->product->cover_image,
                     'price' => $cart->product->price,
+                    'points_price' => $cart->product->points_price,
                     'stock' => $cart->product->stock,
                     'status' => $cart->product->status,
                 ] : null,
                 'subtotal' => $cart->getSubtotal(),
+                'pointsSubtotal' => $cart->getPointsSubtotal(),
             ];
         });
 
         // 计算总计（仅有效且选中的商品）
         $selectedItems = $items->filter(fn($item) => $item['selected'] && $item['isValid']);
         $totalAmount = $selectedItems->sum('subtotal');
+        $totalPoints = $selectedItems->sum('pointsSubtotal') ?? 0;
 
         return response()->json([
             'code' => 0,
@@ -59,6 +62,7 @@ class CartController extends Controller
                 'totalCount' => $items->count(),
                 'selectedCount' => $selectedItems->count(),
                 'totalAmount' => number_format($totalAmount, 2, '.', ''),
+                'totalPoints' => (int) $totalPoints,
             ],
         ]);
     }
