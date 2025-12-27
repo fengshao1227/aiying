@@ -765,6 +765,33 @@ GET /v2/orders/mall
 | 5 | 退款中 |
 | 6 | 已退款 |
 
+**响应示例：**
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 1,
+        "order_no": "ML20251227100000001",
+        "order_status": 0,
+        "actual_amount": "99.00",
+        "created_at": "2025-12-27T10:00:00.000000Z",
+        "items": [
+          { "id": 1, "order_id": 1, "product_name": "商品名称", "product_image": "https://...", "quantity": 2, "subtotal": "99.00" }
+        ]
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+> **说明**：`items` 仅包含列表展示所需字段。详情接口返回完整 item 信息（含 `product_id`, `price` 等）。
+
 ---
 
 #### 5.1.3 获取商城订单详情
@@ -904,6 +931,34 @@ GET /v2/orders/meal
 | status | int | 否 | 订单状态筛选 |
 | page | int | 否 | 页码(默认1) |
 | per_page | int | 否 | 每页数量(默认20) |
+
+**响应示例：**
+
+```json
+{
+  "code": 0,
+  "message": "获取成功",
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": 101,
+        "order_no": "ME20251227100000001",
+        "order_status": 0,
+        "actual_amount": "30.00",
+        "created_at": "2025-12-27T10:00:00.000000Z",
+        "items": [
+          { "id": 1, "meal_order_id": 101, "meal_date": "2025-12-28", "meal_type": "breakfast", "meal_name": "营养早餐" },
+          { "id": 2, "meal_order_id": 101, "meal_date": "2025-12-29", "meal_type": "breakfast", "meal_name": "营养早餐" }
+        ]
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+> **说明**：`items` 按 `meal_date` 升序排列，仅包含列表展示所需字段。详情接口返回完整 item 信息。
 
 ---
 

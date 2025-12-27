@@ -99,7 +99,11 @@ class OrderController extends Controller
         $user = $request->attributes->get('v2_user');
         $status = $request->input('status');
 
-        $query = Order::forUser($user->id)->with('items')->recent();
+        $query = Order::forUser($user->id)
+            ->with(['items' => function ($q) {
+                $q->select('id', 'order_id', 'product_name', 'product_image', 'quantity', 'subtotal');
+            }])
+            ->recent();
 
         if ($status !== null) {
             $query->byStatus($status);
@@ -121,7 +125,7 @@ class OrderController extends Controller
 
         $query = MealOrder::forUser($user->id)
             ->with(['items' => function ($q) {
-                $q->select('id', 'meal_order_id', 'meal_date', 'meal_type', 'meal_name')
+                $q->select('id', 'meal_order_id', 'meal_date', 'meal_type', 'meal_name', 'quantity')
                     ->orderBy('meal_date', 'asc');
             }])
             ->recent();
