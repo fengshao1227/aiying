@@ -10,6 +10,7 @@ use App\Models\V2\Product;
 use App\Models\Room;
 use App\Models\RoomStatus;
 use App\Models\Customer;
+use App\Models\ScoreCardRecord;
 use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +140,7 @@ class DashboardController extends Controller
         $pendingMeals = MealOrder::where('order_status', 1)->count();
         $lowStock = Product::where('status', 1)->where('stock', '<', 10)->count();
         $refundApplying = Order::where('refund_status', 1)->count();
+        $pendingScoreCards = $this->countPendingScoreCards();
 
         return [
             'today' => [
@@ -174,7 +176,111 @@ class DashboardController extends Controller
                 'pending_meals' => $pendingMeals,
                 'low_stock' => $lowStock,
                 'refund_applying' => $refundApplying,
+                'pending_score_cards' => $pendingScoreCards,
             ],
         ];
+    }
+
+    private function countPendingScoreCards(): int
+    {
+        $today = Carbon::today();
+        $count = 0;
+
+        $customers = Customer::whereNotNull('check_in_date')
+            ->whereDate('check_in_date', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('check_out_date')
+                    ->orWhereDate('check_out_date', '>=', $today);
+            })
+            ->get(['customer_id', 'check_in_date', 'check_out_date']);
+
+        $customerIds = $customers->pluck('customer_id')->all();
+        if (empty($customerIds)) {
+            return 0;
+        }
+
+        $records = ScoreCardRecord::whereIn('customer_id', $customerIds)
+            ->whereNotNull('image_url')
+            ->get(['customer_id', 'card_number']);
+
+        $recordsByCustomer = $records->groupBy('customer_id')->map(function ($items) {
+            return $items->pluck('card_number')->flip();
+        });
+
+        foreach ($customers as $customer) {
+            $checkIn = Carbon::parse($customer->check_in_date);
+            $checkOut = $customer->check_out_date ? Carbon::parse($customer->check_out_date) : null;
+
+            $cardSlots = $this->generateCardSlots($checkIn, $checkOut);
+            $existingRecords = $recordsByCustomer->get($customer->customer_id, collect());
+
+            foreach ($cardSlots as $slot) {
+                $targetDate = Carbon::parse($slot['target_date']);
+                if ($targetDate->lte($today) && !$existingRecords->has($slot['card_number'])) {
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    private function generateCardSlots(Carbon $checkIn, ?Carbon $checkOut): array
+    {
+        $slots = [];
+        $cardNumber = 1;
+
+        $slots[] = [
+            'card_number' => $cardNumber++,
+            'card_type' => 'initial',
+            'target_date' => $checkIn->copy()->addDays(2)->format('Y-m-d'),
+        ];
+
+        $weeklyCards = [];
+        $weekNumber = 1;
+        while (true) {
+            $weekDate = $checkIn->copy()->addWeeks($weekNumber);
+            if ($checkOut && $weekDate->gt($checkOut)) {
+                break;
+            }
+            if (!$checkOut && $weekNumber > 12) {
+                break;
+            }
+            $weeklyCards[] = [
+                'card_number' => $cardNumber++,
+                'card_type' => 'weekly',
+                'target_date' => $weekDate->format('Y-m-d'),
+            ];
+            $weekNumber++;
+        }
+
+        $finalCard = null;
+        if ($checkOut) {
+            $finalDate = $checkOut->copy()->subDay();
+            $finalCard = [
+                'card_number' => $cardNumber,
+                'card_type' => 'final',
+                'target_date' => $finalDate->format('Y-m-d'),
+            ];
+
+            if (!empty($weeklyCards)) {
+                $lastWeeklyDate = Carbon::parse(end($weeklyCards)['target_date']);
+                if (abs($finalDate->diffInDays($lastWeeklyDate)) <= 3) {
+                    array_pop($weeklyCards);
+                    $finalCard['card_number'] = $cardNumber - 1;
+                }
+            }
+        }
+
+        $slots = array_merge($slots, $weeklyCards);
+        if ($finalCard) {
+            $slots[] = $finalCard;
+        }
+
+        foreach ($slots as $i => &$slot) {
+            $slot['card_number'] = $i + 1;
+        }
+
+        return $slots;
     }
 }

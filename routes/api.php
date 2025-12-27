@@ -58,6 +58,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin.auth'])->group(functi
         Route::delete('/{id}', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'destroy']);
     });
 
+    // 客户评分卡时间线
+    Route::get('/customers/{id}/score-cards/timeline', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'timeline']);
+    Route::post('/customers/{id}/score-cards/upload', [\App\Http\Controllers\Admin\ScoreCardRecordController::class, 'uploadCard']);
+
     // 文件上传
     Route::prefix('upload')->group(function () {
         Route::post('/image', [\App\Http\Controllers\Admin\UploadController::class, 'uploadImage']);

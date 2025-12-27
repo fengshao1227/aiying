@@ -30,6 +30,10 @@ class ScoreCardRecord extends Model
         'card_number',
         'record_date',
         'score_data',
+        'image_url',
+        'status',
+        'target_date',
+        'card_type',
     ];
 
     /**
@@ -39,7 +43,9 @@ class ScoreCardRecord extends Model
         'customer_id' => 'integer',
         'card_number' => 'integer',
         'record_date' => 'date',
-        'score_data' => 'array',  // JSON自动转为数组
+        'score_data' => 'array',
+        'status' => 'integer',
+        'target_date' => 'date',
     ];
 
     /**
