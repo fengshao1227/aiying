@@ -205,6 +205,7 @@ class WechatPayService
         $headers = [
             'Content-Type: application/json',
             'Accept: application/json',
+            'User-Agent: Aiying-Laravel/1.0',
             'Authorization: ' . $authorization,
         ];
 
