@@ -184,4 +184,28 @@ class Order extends Model
         $this->completed_at = now();
         return $this->save();
     }
+
+    public function getReceiverAddressAttribute($value): ?string
+    {
+        if (empty($value) || str_contains($value, 'undefined')) {
+            return null;
+        }
+        return $value;
+    }
+
+    public function getDeliveryTypeAttribute($value): string
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+        return !empty($this->attributes['room_name']) ? self::DELIVERY_ROOM : self::DELIVERY_EXPRESS;
+    }
+
+    public function getRoomNameAttribute($value): ?string
+    {
+        if ($this->getDeliveryTypeAttribute($this->attributes['delivery_type'] ?? null) === self::DELIVERY_ROOM) {
+            return $value;
+        }
+        return null;
+    }
 }
