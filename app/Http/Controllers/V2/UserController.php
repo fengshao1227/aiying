@@ -58,6 +58,9 @@ class UserController extends Controller
             // 更新最后登录时间
             $user->update(['last_login_at' => now()]);
 
+            // 预加载客户信息
+            $user->load('customer');
+
             // 生成 token (简单实现，实际项目可使用 JWT)
             $token = Str::random(60);
 
