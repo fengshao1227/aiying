@@ -47,8 +47,9 @@ class CustomerController extends Controller
         }
 
         // 状态筛选 (0=未入住, 1=已入住, 2=已退房)
-        if ($request->has('status') && $request->status !== '') {
-            $status = (int) $request->status;
+        $statusParam = $request->input('status');
+        if ($statusParam !== null && $statusParam !== '') {
+            $status = (int) $statusParam;
             $today = now()->toDateString();
             if ($status === 0) {
                 // 未入住：check_in_date 为空
