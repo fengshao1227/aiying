@@ -13,7 +13,7 @@ class MealOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MealOrder::with(['user', 'customer']);
+        $query = MealOrder::with(['user', 'customer', 'items']);
 
         if ($request->filled('keyword')) {
             $keyword = addcslashes($request->keyword, '%_');
