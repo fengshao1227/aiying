@@ -185,6 +185,79 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getMallOrderByOrderNo(Request $request, $orderNo)
+    {
+        $user = $request->attributes->get('v2_user');
+
+        $order = Order::forUser($user->id)->with('items')->where('order_no', $orderNo)->first();
+
+        if (!$order) {
+            return response()->json([
+                'code' => 404,
+                'message' => '订单不存在',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'code' => 0,
+            'message' => '获取成功',
+            'data' => $order,
+        ]);
+    }
+
+    public function getMealOrderByOrderNo(Request $request, $orderNo)
+    {
+        $user = $request->attributes->get('v2_user');
+
+        $order = MealOrder::forUser($user->id)->with('items')->where('order_no', $orderNo)->first();
+
+        if (!$order) {
+            return response()->json([
+                'code' => 404,
+                'message' => '订单不存在',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'code' => 0,
+            'message' => '获取成功',
+            'data' => $order,
+        ]);
+    }
+
+    public function getOrderByOrderNo(Request $request, $orderNo)
+    {
+        $user = $request->attributes->get('v2_user');
+
+        // 先查商城订单
+        $order = Order::forUser($user->id)->with('items')->where('order_no', $orderNo)->first();
+        if ($order) {
+            return response()->json([
+                'code' => 0,
+                'message' => '获取成功',
+                'data' => ['order' => $order, 'type' => 'mall'],
+            ]);
+        }
+
+        // 再查订餐订单
+        $order = MealOrder::forUser($user->id)->with('items')->where('order_no', $orderNo)->first();
+        if ($order) {
+            return response()->json([
+                'code' => 0,
+                'message' => '获取成功',
+                'data' => ['order' => $order, 'type' => 'meal'],
+            ]);
+        }
+
+        return response()->json([
+            'code' => 404,
+            'message' => '订单不存在',
+            'data' => null,
+        ], 404);
+    }
+
     public function cancelMallOrder(Request $request, $id)
     {
         try {

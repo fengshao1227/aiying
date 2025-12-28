@@ -66,9 +66,13 @@ Route::prefix('cart')->middleware('v2.user.auth')->group(function () {
 
 // 订单模块路由（需要认证）
 Route::prefix('orders')->middleware('v2.user.auth')->group(function () {
+    // 通用：通过订单号查询（自动识别订单类型）
+    Route::get('/by-order-no/{orderNo}', [OrderController::class, 'getOrderByOrderNo']);
+
     // 商城订单
     Route::post('/mall', [OrderController::class, 'createMallOrder']);
     Route::get('/mall', [OrderController::class, 'getMallOrders']);
+    Route::get('/mall/by-order-no/{orderNo}', [OrderController::class, 'getMallOrderByOrderNo']);
     Route::get('/mall/{id}', [OrderController::class, 'getMallOrderDetail']);
     Route::post('/mall/{id}/cancel', [OrderController::class, 'cancelMallOrder']);
     Route::post('/mall/{id}/pay', [PaymentController::class, 'payMallOrder']);
@@ -78,6 +82,7 @@ Route::prefix('orders')->middleware('v2.user.auth')->group(function () {
     // 订餐订单
     Route::post('/meal', [OrderController::class, 'createMealOrder']);
     Route::get('/meal', [OrderController::class, 'getMealOrders']);
+    Route::get('/meal/by-order-no/{orderNo}', [OrderController::class, 'getMealOrderByOrderNo']);
     Route::get('/meal/{id}', [OrderController::class, 'getMealOrderDetail']);
     Route::post('/meal/{id}/cancel', [OrderController::class, 'cancelMealOrder']);
     Route::post('/meal/{id}/pay', [PaymentController::class, 'payMealOrder']);
