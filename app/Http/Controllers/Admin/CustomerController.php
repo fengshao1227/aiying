@@ -46,6 +46,27 @@ class CustomerController extends Controller
             }
         }
 
+        // 状态筛选 (0=未入住, 1=已入住, 2=已退房)
+        if ($request->has('status') && $request->status !== '') {
+            $status = (int) $request->status;
+            $today = now()->toDateString();
+            if ($status === 0) {
+                // 未入住：check_in_date 为空
+                $query->whereNull('check_in_date');
+            } elseif ($status === 1) {
+                // 已入住：check_in_date 不为空，且 (check_out_date 为空 或 check_out_date >= 今天)
+                $query->whereNotNull('check_in_date')
+                      ->where(function ($q) use ($today) {
+                          $q->whereNull('check_out_date')
+                            ->orWhere('check_out_date', '>=', $today);
+                      });
+            } elseif ($status === 2) {
+                // 已退房：check_out_date 不为空 且 check_out_date < 今天
+                $query->whereNotNull('check_out_date')
+                      ->where('check_out_date', '<', $today);
+            }
+        }
+
         // 排序
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
