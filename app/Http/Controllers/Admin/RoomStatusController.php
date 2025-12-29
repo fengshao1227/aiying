@@ -391,18 +391,19 @@ class RoomStatusController extends Controller
     }
 
     /**
-     * 获取指定房间在指定月份的入住记录
+     * 获取指定房间在指定月份的入住/预定记录
      */
     private function getMonthOccupancy(int $roomId, string $month): array
     {
         $records = RoomStatus::where('room_id', $roomId)
             ->where('record_month', $month)
-            ->where('status', RoomStatus::STATUS_OCCUPIED)
+            ->whereIn('status', [RoomStatus::STATUS_OCCUPIED, RoomStatus::STATUS_MAINTENANCE])
             ->with('customer:customer_id,customer_name')
             ->get();
 
         return $records->map(function ($record) {
             return [
+                'status' => $record->status,
                 'customer_name' => $record->customer?->customer_name ?? '未知客户',
                 'check_in_date' => $record->check_in_date?->format('Y-m-d'),
                 'check_out_date' => $record->check_out_date?->format('Y-m-d'),
