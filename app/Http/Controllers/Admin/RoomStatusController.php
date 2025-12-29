@@ -338,10 +338,10 @@ class RoomStatusController extends Controller
             ->orderBy('display_order')
             ->get();
 
-        // 查询这些房间在当月是否有入住记录（status=1）
+        // 查询这些房间在当月是否有占用记录（已入住或已预定）
         $occupiedRoomIds = RoomStatus::whereIn('room_id', $rooms->pluck('room_id'))
             ->where('record_month', $month)
-            ->where('status', RoomStatus::STATUS_OCCUPIED)
+            ->where('status', '!=', RoomStatus::STATUS_VACANT)
             ->pluck('room_id')
             ->toArray();
 
