@@ -1120,3 +1120,39 @@ WHERE rs.customer_id IS NULL AND rs.status = 1 | SUCCESS
 2025-12-29T04:16:52.452Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
 2025-12-29T04:16:56.565Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
 2025-12-29T04:16:56.565Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:21:51.113Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T04:21:54.681Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:21:54.681Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:26:51.841Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T04:26:55.232Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:26:55.232Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:31:52.926Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T04:31:56.851Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:31:56.852Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:36:50.702Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T04:36:54.770Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:36:54.771Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:41:52.366Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T04:41:55.982Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T04:41:55.983Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T05:03:56.408Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T05:03:59.855Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T05:03:59.856Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:19:04.399Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T06:19:07.615Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:19:07.616Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:24:03.056Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T06:24:05.988Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:24:05.988Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:29:02.781Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T06:29:06.145Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:29:06.145Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:34:02.304Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2025-12-29T06:34:05.990Z | connection_pool_recreate_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T06:34:05.990Z | health_check_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T07:33:20.826Z | server_start | {"name":"mysql-mcp-server","version":"1.0.0","logDir":"./.setting","logFile":".setting/mcp-mysql.log"} | SUCCESS | RESPONSE: {"status":"started"}
+2025-12-29T07:33:20.827Z | initialize | {"protocolVersion":"2025-11-25","capabilities":{"roots":{}},"clientInfo":{"name":"claude-code","version":"2.0.76"}} | SUCCESS | RESPONSE: null
+2025-12-29T07:33:20.827Z | initialize | {"protocolVersion":"2025-11-25","capabilities":{"roots":{}},"clientInfo":{"name":"claude-code","version":"2.0.76"}} | SUCCESS | RESPONSE: {"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":false},"roots":{"listChanged":false}},"serverInfo":{"name":"mysql-mcp-server","version":"1.0.0"}}
+2025-12-29T07:33:20.828Z | tools/list | {} | SUCCESS | RESPONSE: {"tools":[{"name":"sql_query","description":"Execute SQL query, supports DDL and DML operations","inputSchema":{"type":"object","properties":{"sql":{"type":"string","description":"SQL statement to execute"}},"required":["sql"]}},{"name":"get_database_info","description":"Get database information, including database list, table list and configuration information","inputSchema":{"type":"object","properties":{}}},{"name":"get_operation_logs","description":"Get operation logs","inputSchema":{"type":"object","properties":{"limit":{"type":"number","description":"Limit count, default 50"},"offset":{"type":"number","description":"Offset, default 0"}}}},{"name":"check_permissions","description":"Check database permissions for DDL, DROP, DELETE and other operations. Returns detailed permission status including readonly mode restrictions (only SELECT and SHOW allowed when readonly is enabled)","inputSchema":{"type":"object","properties":{}}},{"name":"get_ddl_sql_logs","description":"Get DDL SQL operation logs","inputSchema":{"type":"object","properties":{"limit":{"type":"number","description":"Limit count, default 50, max 500"},"offset":{"type":"number","description":"Offset, default 0"}}}}],"environment":{"READONLY":false,"ALLOW_DDL":false,"ALLOW_DROP":false,"ALLOW_DELETE":false,"MYSQL_HOST":"82.157.47.215","MYSQL_PORT":"3306","MYSQL_USER":"root","MYSQL_DATABASE":"aiying","TOOL_PREFIX":"","PROJECT_NAME":"","serverInfo":{"name":"mysql-mcp-server","version":"1.0.0"}}}
+2025-12-29T07:33:24.407Z | connection_pool_error | {"error":"Connection lost: The server closed the connection."} | Connection lost: The server closed the connection. | RESPONSE: null
+2025-12-29T07:33:24.407Z | notifications/initialized | {} | SUCCESS | RESPONSE: null
